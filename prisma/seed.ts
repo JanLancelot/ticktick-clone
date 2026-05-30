@@ -10,7 +10,7 @@ import {
   HabitFrequency,
   HabitStatus,
   FocusType
-} from "../app/generated/prisma/client";
+} from "../src/app/generated/prisma/client";
 
 const connectionString = `${process.env.DATABASE_URL}`;
 const adapter = new PrismaPg({ connectionString });
