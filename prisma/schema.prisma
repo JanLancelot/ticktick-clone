@@ -1,0 +1,318 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum TaskStatus {
+  NORMAL
+  COMPLETED
+  ABANDONED
+}
+
+enum TaskPriority {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProjectKind {
+  INBOX   // default catch-all list per user
+  LIST    // simple task list
+  PROJECT // kanban / timeline capable
+}
+
+enum ProjectView {
+  LIST
+  KANBAN
+  TIMELINE
+  CALENDAR
+}
+
+enum MemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum HabitStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum FocusType {
+  POMODORO
+  STOPWATCH
+}
+
+// ─────────────────────────────────────────────
+// User
+// ─────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  avatarUrl    String?
+  passwordHash String
+  timezone     String   @default("UTC")
+
+  projects     Project[]
+  folders      Folder[]
+  tags         Tag[]
+  habits       Habit[]
+  focusRecords FocusRecord[]
+  memberships  ProjectMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Folders  (group multiple lists/projects)
+// ─────────────────────────────────────────────
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  sortOrder Float    @default(0)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projects Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Projects  (lists / projects / inbox)
+// ─────────────────────────────────────────────
+
+model Project {
+  id         String      @id @default(cuid())
+  name       String
+  color      String? // hex color
+  icon       String? // emoji or icon slug
+  kind       ProjectKind @default(LIST)
+  view       ProjectView @default(LIST)
+  isDefault  Boolean     @default(false) // the user's Inbox
+  isArchived Boolean     @default(false)
+  isClosed   Boolean     @default(false)
+  sortOrder  Float       @default(0)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  folderId String?
+  folder   Folder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  tasks   Task[]
+  members ProjectMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Project members  (shared lists / projects)
+// ─────────────────────────────────────────────
+
+model ProjectMember {
+  id   String     @id @default(cuid())
+  role MemberRole @default(VIEWER)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+}
+
+// ─────────────────────────────────────────────
+// Tasks
+// ─────────────────────────────────────────────
+
+model Task {
+  id       String       @id @default(cuid())
+  title    String
+  content  String? // rich text / markdown notes
+  status   TaskStatus   @default(NORMAL)
+  priority TaskPriority @default(NONE)
+
+  // Scheduling
+  startDate DateTime?
+  dueDate   DateTime?
+  isAllDay  Boolean   @default(true)
+  timezone  String?
+
+  // Recurrence — iCal RRULE string e.g. "FREQ=DAILY;INTERVAL=1"
+  repeatFlag String?
+
+  sortOrder   Float     @default(0)
+  completedAt DateTime?
+
+  // List association (null = stays in Inbox)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  // Self-relation for sub-tasks
+  parentId String?
+  parent   Task?    @relation("SubTasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks Task[]  @relation("SubTasks")
+
+  tags         TagTask[] // Fixed: Changed from TaskTag[] to map correctly to model TagTask
+  reminders    Reminder[]
+  attachments  Attachment[]
+  focusRecords FocusRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Tags
+// ─────────────────────────────────────────────
+
+model Tag {
+  id        String  @id @default(cuid())
+  name      String
+  color     String?
+  sortOrder Float   @default(0)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tasks TagTask[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+}
+
+model TagTask {
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@id([tagId, taskId])
+}
+
+// ─────────────────────────────────────────────
+// Reminders
+// ─────────────────────────────────────────────
+
+model Reminder {
+  id          String   @id @default(cuid())
+  triggerAt   DateTime // absolute UTC time to fire
+  isTriggered Boolean  @default(false)
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Attachments
+// ─────────────────────────────────────────────
+
+model Attachment {
+  id       String @id @default(cuid())
+  fileName String
+  fileUrl  String
+  fileSize Int? // bytes
+  mimeType String?
+
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────
+// Habits
+// ─────────────────────────────────────────────
+
+model Habit {
+  id           String         @id @default(cuid())
+  name         String
+  icon         String? // emoji or icon slug
+  color        String? // hex color
+  status       HabitStatus    @default(ACTIVE)
+  frequency    HabitFrequency @default(DAILY)
+  // For WEEKLY habits: array of weekday indices 0 (Sun) – 6 (Sat)
+  repeatDays   Int[]
+  goal         Int            @default(1) // target completions per period
+  unit         String? // e.g. "times", "glasses", "km"
+  reminderTime String? // "HH:mm" local time
+  startDate    DateTime       @default(now()) @db.Date
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  records HabitRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HabitRecord {
+  id    String   @id @default(cuid())
+  date  DateTime @db.Date // one record per habit per calendar day
+  value Int      @default(1) // completion count for that day
+
+  habitId String
+  habit   Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+// ─────────────────────────────────────────────
+// Focus / Pomodoro sessions
+// ─────────────────────────────────────────────
+
+model FocusRecord {
+  id        String    @id @default(cuid())
+  type      FocusType @default(POMODORO)
+  duration  Int // total seconds
+  startedAt DateTime
+  endedAt   DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Optionally linked to a task being focused on
+  taskId String?
+  task   Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+}
