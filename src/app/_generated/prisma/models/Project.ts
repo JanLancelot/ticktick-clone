@@ -677,10 +677,6 @@ export type EnumProjectViewFieldUpdateOperationsInput = {
   set?: $Enums.ProjectView
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type ProjectCreateNestedOneWithoutMembersInput = {
   create?: Prisma.XOR<Prisma.ProjectCreateWithoutMembersInput, Prisma.ProjectUncheckedCreateWithoutMembersInput>
   connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutMembersInput
