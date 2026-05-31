@@ -48,6 +48,9 @@ export default function TasksPage() {
         />
       </div>
 
+      {/* Permanent vertical line marking the edit panel workspace boundary */}
+      <div className="hidden lg:block fixed top-0 right-0 h-screen w-[500px] border-l border-border/60 pointer-events-none" />
+
       {/* Right Column: Pinned to the right edge, taking full viewport height */}
       {selectedTask && (
         <div className="fixed top-0 right-0 h-screen w-full lg:w-[500px] z-40 border-l border-border bg-card shadow-2xl">
