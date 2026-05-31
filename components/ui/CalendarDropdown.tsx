@@ -103,9 +103,9 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
     const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" }
     const formatted = checkDate.toLocaleDateString("en-US", options)
 
-    if (diffDays === 0) return `Today (${formatted})`
-    if (diffDays === 1) return `Tomorrow (${formatted})`
-    if (diffDays === -1) return `Yesterday (${formatted})`
+    if (diffDays === 0) return "Today"
+    if (diffDays === 1) return "Tomorrow"
+    if (diffDays === -1) return "Yesterday"
     return `${formatted}`
   }
 

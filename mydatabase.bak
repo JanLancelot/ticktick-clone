@@ -1,0 +1,999 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict QWj0ZnPwueUmo75ABJfpvYIaKDg92GzS1UkDIMEVcQFUECqstLsTQqJaZz9kd8z
+
+-- Dumped from database version 17.2
+-- Dumped by pg_dump version 18.4 (Ubuntu 18.4-0ubuntu0.26.04.1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: prisma_migration
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO prisma_migration;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: prisma_migration
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
+-- Name: prisma_postgres; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS prisma_postgres WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION prisma_postgres; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION prisma_postgres IS 'prisma_postgres';
+
+
+--
+-- Name: FocusType; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."FocusType" AS ENUM (
+    'POMODORO',
+    'STOPWATCH'
+);
+
+
+ALTER TYPE public."FocusType" OWNER TO prisma_migration;
+
+--
+-- Name: HabitFrequency; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."HabitFrequency" AS ENUM (
+    'DAILY',
+    'WEEKLY',
+    'MONTHLY'
+);
+
+
+ALTER TYPE public."HabitFrequency" OWNER TO prisma_migration;
+
+--
+-- Name: HabitStatus; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."HabitStatus" AS ENUM (
+    'ACTIVE',
+    'PAUSED',
+    'ARCHIVED'
+);
+
+
+ALTER TYPE public."HabitStatus" OWNER TO prisma_migration;
+
+--
+-- Name: MemberRole; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."MemberRole" AS ENUM (
+    'OWNER',
+    'EDITOR',
+    'VIEWER'
+);
+
+
+ALTER TYPE public."MemberRole" OWNER TO prisma_migration;
+
+--
+-- Name: ProjectKind; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."ProjectKind" AS ENUM (
+    'INBOX',
+    'LIST',
+    'PROJECT'
+);
+
+
+ALTER TYPE public."ProjectKind" OWNER TO prisma_migration;
+
+--
+-- Name: ProjectView; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."ProjectView" AS ENUM (
+    'LIST',
+    'KANBAN',
+    'TIMELINE',
+    'CALENDAR'
+);
+
+
+ALTER TYPE public."ProjectView" OWNER TO prisma_migration;
+
+--
+-- Name: TaskPriority; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."TaskPriority" AS ENUM (
+    'NONE',
+    'LOW',
+    'MEDIUM',
+    'HIGH'
+);
+
+
+ALTER TYPE public."TaskPriority" OWNER TO prisma_migration;
+
+--
+-- Name: TaskStatus; Type: TYPE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TYPE public."TaskStatus" AS ENUM (
+    'NORMAL',
+    'COMPLETED',
+    'ABANDONED'
+);
+
+
+ALTER TYPE public."TaskStatus" OWNER TO prisma_migration;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: Attachment; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."Attachment" (
+    id text NOT NULL,
+    "fileName" text NOT NULL,
+    "fileUrl" text NOT NULL,
+    "fileSize" integer,
+    "mimeType" text,
+    "taskId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public."Attachment" OWNER TO prisma_migration;
+
+--
+-- Name: FocusRecord; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."FocusRecord" (
+    id text NOT NULL,
+    type public."FocusType" DEFAULT 'POMODORO'::public."FocusType" NOT NULL,
+    duration integer NOT NULL,
+    "startedAt" timestamp(3) without time zone NOT NULL,
+    "endedAt" timestamp(3) without time zone,
+    "userId" text NOT NULL,
+    "taskId" text,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public."FocusRecord" OWNER TO prisma_migration;
+
+--
+-- Name: Folder; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."Folder" (
+    id text NOT NULL,
+    name text NOT NULL,
+    "sortOrder" double precision DEFAULT 0 NOT NULL,
+    "userId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public."Folder" OWNER TO prisma_migration;
+
+--
+-- Name: Habit; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."Habit" (
+    id text NOT NULL,
+    name text NOT NULL,
+    icon text,
+    color text,
+    status public."HabitStatus" DEFAULT 'ACTIVE'::public."HabitStatus" NOT NULL,
+    frequency public."HabitFrequency" DEFAULT 'DAILY'::public."HabitFrequency" NOT NULL,
+    "repeatDays" integer[],
+    goal integer DEFAULT 1 NOT NULL,
+    unit text,
+    "reminderTime" text,
+    "startDate" date DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "userId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public."Habit" OWNER TO prisma_migration;
+
+--
+-- Name: HabitRecord; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."HabitRecord" (
+    id text NOT NULL,
+    date date NOT NULL,
+    value integer DEFAULT 1 NOT NULL,
+    "habitId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public."HabitRecord" OWNER TO prisma_migration;
+
+--
+-- Name: Project; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."Project" (
+    id text NOT NULL,
+    name text NOT NULL,
+    color text,
+    icon text,
+    kind public."ProjectKind" DEFAULT 'LIST'::public."ProjectKind" NOT NULL,
+    view public."ProjectView" DEFAULT 'LIST'::public."ProjectView" NOT NULL,
+    "isDefault" boolean DEFAULT false NOT NULL,
+    "isArchived" boolean DEFAULT false NOT NULL,
+    "isClosed" boolean DEFAULT false NOT NULL,
+    "sortOrder" double precision DEFAULT 0 NOT NULL,
+    "userId" text NOT NULL,
+    "folderId" text,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public."Project" OWNER TO prisma_migration;
+
+--
+-- Name: ProjectMember; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."ProjectMember" (
+    id text NOT NULL,
+    role public."MemberRole" DEFAULT 'VIEWER'::public."MemberRole" NOT NULL,
+    "projectId" text NOT NULL,
+    "userId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public."ProjectMember" OWNER TO prisma_migration;
+
+--
+-- Name: Reminder; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."Reminder" (
+    id text NOT NULL,
+    "triggerAt" timestamp(3) without time zone NOT NULL,
+    "isTriggered" boolean DEFAULT false NOT NULL,
+    "taskId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public."Reminder" OWNER TO prisma_migration;
+
+--
+-- Name: Tag; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."Tag" (
+    id text NOT NULL,
+    name text NOT NULL,
+    color text,
+    "sortOrder" double precision DEFAULT 0 NOT NULL,
+    "userId" text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public."Tag" OWNER TO prisma_migration;
+
+--
+-- Name: TagTask; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."TagTask" (
+    "tagId" text NOT NULL,
+    "taskId" text NOT NULL
+);
+
+
+ALTER TABLE public."TagTask" OWNER TO prisma_migration;
+
+--
+-- Name: Task; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."Task" (
+    id text NOT NULL,
+    title text NOT NULL,
+    content text,
+    status public."TaskStatus" DEFAULT 'NORMAL'::public."TaskStatus" NOT NULL,
+    priority public."TaskPriority" DEFAULT 'NONE'::public."TaskPriority" NOT NULL,
+    "startDate" timestamp(3) without time zone,
+    "dueDate" timestamp(3) without time zone,
+    "isAllDay" boolean DEFAULT true NOT NULL,
+    timezone text,
+    "repeatFlag" text,
+    "sortOrder" double precision DEFAULT 0 NOT NULL,
+    "completedAt" timestamp(3) without time zone,
+    "projectId" text,
+    "parentId" text,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public."Task" OWNER TO prisma_migration;
+
+--
+-- Name: _prisma_migrations; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public._prisma_migrations (
+    id character varying(36) NOT NULL,
+    checksum character varying(64) NOT NULL,
+    finished_at timestamp with time zone,
+    migration_name character varying(255) NOT NULL,
+    logs text,
+    rolled_back_at timestamp with time zone,
+    started_at timestamp with time zone DEFAULT now() NOT NULL,
+    applied_steps_count integer DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public._prisma_migrations OWNER TO prisma_migration;
+
+--
+-- Name: account; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public.account (
+    id text NOT NULL,
+    "accountId" text NOT NULL,
+    "providerId" text NOT NULL,
+    "userId" text NOT NULL,
+    "accessToken" text,
+    "refreshToken" text,
+    "idToken" text,
+    "accessTokenExpiresAt" timestamp(3) without time zone,
+    "refreshTokenExpiresAt" timestamp(3) without time zone,
+    scope text,
+    password text,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public.account OWNER TO prisma_migration;
+
+--
+-- Name: session; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public.session (
+    id text NOT NULL,
+    "expiresAt" timestamp(3) without time zone NOT NULL,
+    token text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    "ipAddress" text,
+    "userAgent" text,
+    "userId" text NOT NULL
+);
+
+
+ALTER TABLE public.session OWNER TO prisma_migration;
+
+--
+-- Name: user; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public."user" (
+    id text NOT NULL,
+    email text NOT NULL,
+    name text NOT NULL,
+    "avatarUrl" text,
+    "passwordHash" text,
+    timezone text DEFAULT 'UTC'::text NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL,
+    "emailVerified" boolean DEFAULT false NOT NULL,
+    image text
+);
+
+
+ALTER TABLE public."user" OWNER TO prisma_migration;
+
+--
+-- Name: verification; Type: TABLE; Schema: public; Owner: prisma_migration
+--
+
+CREATE TABLE public.verification (
+    id text NOT NULL,
+    identifier text NOT NULL,
+    value text NOT NULL,
+    "expiresAt" timestamp(3) without time zone NOT NULL,
+    "createdAt" timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updatedAt" timestamp(3) without time zone NOT NULL
+);
+
+
+ALTER TABLE public.verification OWNER TO prisma_migration;
+
+--
+-- Data for Name: Attachment; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."Attachment" (id, "fileName", "fileUrl", "fileSize", "mimeType", "taskId", "createdAt") FROM stdin;
+cmptcpxz0000uqiiatewe9r2w	architecture_proposal.pdf	https://example.com/files/architecture_proposal.pdf	1245000	application/pdf	cmptcpxxf000tqiia3roi5xbj	2026-05-31 05:40:53.436
+\.
+
+
+--
+-- Data for Name: FocusRecord; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."FocusRecord" (id, type, duration, "startedAt", "endedAt", "userId", "taskId", "createdAt") FROM stdin;
+cmptcpxpi000oqiiat7ao004z	POMODORO	1500	2026-05-31 05:00:52.351	2026-05-31 05:25:52.351	cmptcpwif0000qiiahsn8l2i0	cmptcpxmd000nqiiadaotmlxx	2026-05-31 05:40:53.094
+\.
+
+
+--
+-- Data for Name: Folder; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."Folder" (id, name, "sortOrder", "userId", "createdAt", "updatedAt") FROM stdin;
+cmptcpwlp0002qiiac1r6rlfl	💼 Work & Projects	1	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:51.661	2026-05-31 05:40:51.661
+cmptcpwnb0003qiiafrawj7u6	✨ Personal Life	2	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:51.719	2026-05-31 05:40:51.719
+\.
+
+
+--
+-- Data for Name: Habit; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."Habit" (id, name, icon, color, status, frequency, "repeatDays", goal, unit, "reminderTime", "startDate", "userId", "createdAt", "updatedAt") FROM stdin;
+cmptcpy5d000yqiiaw3pwwojr	Drink 8 glasses of water	droplet	#3B82F6	ACTIVE	DAILY	\N	8	glasses	08:00	2026-05-31	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:53.665	2026-05-31 05:40:53.665
+cmptcpybp0012qiia4l0i8rvb	Read 15 pages of a book	book-open	#8B5CF6	ACTIVE	DAILY	\N	15	pages	21:00	2026-05-31	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:53.893	2026-05-31 05:40:53.893
+cmptcpyhw0015qiia9fjz0e7q	Meditate 10 minutes	sparkles	#10B981	PAUSED	DAILY	\N	10	minutes	07:30	2026-05-31	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:54.116	2026-05-31 05:40:54.116
+\.
+
+
+--
+-- Data for Name: HabitRecord; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."HabitRecord" (id, date, value, "habitId", "createdAt") FROM stdin;
+cmptcpy8l000zqiiap4wokacn	2026-05-29	8	cmptcpy5d000yqiiaw3pwwojr	2026-05-31 05:40:53.781
+cmptcpy8l0010qiia79zzg579	2026-05-30	6	cmptcpy5d000yqiiaw3pwwojr	2026-05-31 05:40:53.781
+cmptcpy8l0011qiiayc6ls92a	2026-05-31	4	cmptcpy5d000yqiiaw3pwwojr	2026-05-31 05:40:53.781
+cmptcpyes0013qiiajtax4u4w	2026-05-29	20	cmptcpybp0012qiia4l0i8rvb	2026-05-31 05:40:54.004
+cmptcpyes0014qiiaeut7znef	2026-05-30	15	cmptcpybp0012qiia4l0i8rvb	2026-05-31 05:40:54.004
+\.
+
+
+--
+-- Data for Name: Project; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."Project" (id, name, color, icon, kind, view, "isDefault", "isArchived", "isClosed", "sortOrder", "userId", "folderId", "createdAt", "updatedAt") FROM stdin;
+cmptcpwow0004qiiae8za9ih8	Inbox	\N	\N	INBOX	LIST	t	f	f	0	cmptcpwif0000qiiahsn8l2i0	\N	2026-05-31 05:40:51.776	2026-05-31 05:40:51.776
+cmptcpwqi0005qiia9lg94gpe	🎯 ZOC Tasks	#4F46E5	target	PROJECT	KANBAN	f	f	f	1	cmptcpwif0000qiiahsn8l2i0	cmptcpwlp0002qiiac1r6rlfl	2026-05-31 05:40:51.834	2026-05-31 05:40:51.834
+cmptcpws40006qiiazvbfy2jf	🛍️ Weekly Groceries	#10B981	shopping-bag	LIST	LIST	f	f	f	1	cmptcpwif0000qiiahsn8l2i0	cmptcpwnb0003qiiafrawj7u6	2026-05-31 05:40:51.892	2026-05-31 05:40:51.892
+cmptcpwtq0007qiiag4gx708f	📅 Work Roadmap	#F59E0B	calendar	PROJECT	TIMELINE	f	f	f	2	cmptcpwif0000qiiahsn8l2i0	cmptcpwlp0002qiiac1r6rlfl	2026-05-31 05:40:51.95	2026-05-31 05:40:51.95
+cmptcpwvb0008qiiant11lgp9	💪 Healthy Lifestyle	#EF4444	heart	PROJECT	CALENDAR	f	f	f	2	cmptcpwif0000qiiahsn8l2i0	cmptcpwnb0003qiiafrawj7u6	2026-05-31 05:40:52.007	2026-05-31 05:40:52.007
+cmptcpwww0009qiiahi92ekj1	Inbox	\N	\N	INBOX	LIST	t	f	f	0	cmptcpwk30001qiia7e6fee30	\N	2026-05-31 05:40:52.064	2026-05-31 05:40:52.064
+cmptd2oq40001caia0j34dnwk	Inbox	#3b82f6	\N	INBOX	LIST	t	f	f	0	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	\N	2026-05-31 05:50:47.98	2026-05-31 05:50:47.98
+cmpte5j7i0005caia3vdqgxsn	Sample	#ec4899	\N	LIST	LIST	f	f	f	0	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	\N	2026-05-31 06:21:00.414	2026-05-31 06:21:00.414
+\.
+
+
+--
+-- Data for Name: ProjectMember; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."ProjectMember" (id, role, "projectId", "userId", "createdAt") FROM stdin;
+cmptcpwyh000aqiiasugmsx5w	EDITOR	cmptcpwqi0005qiia9lg94gpe	cmptcpwk30001qiia7e6fee30	2026-05-31 05:40:52.121
+\.
+
+
+--
+-- Data for Name: Reminder; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."Reminder" (id, "triggerAt", "isTriggered", "taskId", "createdAt") FROM stdin;
+cmptcpx84000gqiiarcf203l6	2026-06-01 03:40:52.351	f	cmptcpx6j000fqiiaeux7hnqc	2026-05-31 05:40:52.468
+\.
+
+
+--
+-- Data for Name: Tag; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."Tag" (id, name, color, "sortOrder", "userId", "createdAt", "updatedAt") FROM stdin;
+cmptcpx04000bqiiao6u4grqz	urgent	#EF4444	1	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:52.18	2026-05-31 05:40:52.18
+cmptcpx1r000cqiiazq4gmjjk	quick	#3B82F6	2	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:52.239	2026-05-31 05:40:52.239
+cmptcpx3b000dqiiazwiniwln	deep-work	#8B5CF6	3	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:52.295	2026-05-31 05:40:52.295
+cmptd50e10004caia6gh4q7xd	test	\N	0	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	2026-05-31 05:52:36.409	2026-05-31 05:52:36.409
+\.
+
+
+--
+-- Data for Name: TagTask; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."TagTask" ("tagId", "taskId") FROM stdin;
+cmptcpx3b000dqiiazwiniwln	cmptcpxbb000iqiia3tto8rpe
+cmptcpx04000bqiiao6u4grqz	cmptcpxeh000jqiia1ovnjpos
+cmptcpx1r000cqiiazq4gmjjk	cmptcpxmd000nqiiadaotmlxx
+\.
+
+
+--
+-- Data for Name: Task; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."Task" (id, title, content, status, priority, "startDate", "dueDate", "isAllDay", timezone, "repeatFlag", "sortOrder", "completedAt", "projectId", "parentId", "createdAt", "updatedAt") FROM stdin;
+cmptcpx4w000eqiiaqebmwbqw	Buy organic whole milk	\N	NORMAL	NONE	\N	\N	t	\N	\N	1	\N	cmptcpwow0004qiiae8za9ih8	\N	2026-05-31 05:40:52.352	2026-05-31 05:40:52.352
+cmptcpx6j000fqiiaeux7hnqc	Call dentist to reschedule appointment	Reschedule the routine cleaning originally planned for next Tuesday. Preferred times: morning between 9 AM and 11 AM.	NORMAL	MEDIUM	\N	2026-06-01 05:40:52.351	f	America/New_York	\N	2	\N	cmptcpwow0004qiiae8za9ih8	\N	2026-05-31 05:40:52.411	2026-05-31 05:40:52.411
+cmptcpx9q000hqiialxbng33v	Watch Next.js 15 routing tutorial	Reviewed the new app router updates and Server Action form state enhancements.	COMPLETED	LOW	\N	\N	t	\N	\N	3	2026-05-30 05:40:52.351	cmptcpwow0004qiiae8za9ih8	\N	2026-05-31 05:40:52.526	2026-05-31 05:40:52.526
+cmptcpxbb000iqiia3tto8rpe	Design landing page with modern dark mode & glassmorphism	Create a breathtaking experience with Outfit font, harmony hues, smooth card gradients, and subtle hover scale animations.	NORMAL	HIGH	\N	\N	t	\N	\N	1	\N	cmptcpwqi0005qiia9lg94gpe	\N	2026-05-31 05:40:52.583	2026-05-31 05:40:52.583
+cmptcpxeh000jqiia1ovnjpos	Setup Prisma ORM and seed database	Configure PostgreSQL and prepare sample data for local testing.	NORMAL	HIGH	\N	\N	t	\N	\N	2	\N	cmptcpwqi0005qiia9lg94gpe	\N	2026-05-31 05:40:52.697	2026-05-31 05:40:52.697
+cmptcpxhm000kqiiar5uhrdv1	Define relational schema models in schema.prisma	\N	COMPLETED	NONE	\N	\N	t	\N	\N	1	2026-05-30 05:40:52.351	cmptcpwqi0005qiia9lg94gpe	cmptcpxeh000jqiia1ovnjpos	2026-05-31 05:40:52.81	2026-05-31 05:40:52.81
+cmptcpxj7000lqiia1ks38hfk	Configure prisma.config.ts for Prisma 7 compliance	\N	COMPLETED	NONE	\N	\N	t	\N	\N	2	2026-05-31 05:40:52.351	cmptcpwqi0005qiia9lg94gpe	cmptcpxeh000jqiia1ovnjpos	2026-05-31 05:40:52.867	2026-05-31 05:40:52.867
+cmptcpxks000mqiialhi2x0ez	Write rich and compliant seed.ts script	\N	NORMAL	NONE	\N	\N	t	\N	\N	3	\N	cmptcpwqi0005qiia9lg94gpe	cmptcpxeh000jqiia1ovnjpos	2026-05-31 05:40:52.924	2026-05-31 05:40:52.924
+cmptcpxmd000nqiiadaotmlxx	Implement Focus/Pomodoro tracking page	Includes interactive countdown, audio notification sound, statistics summary chart.	NORMAL	MEDIUM	\N	\N	t	\N	\N	3	\N	cmptcpwqi0005qiia9lg94gpe	\N	2026-05-31 05:40:52.981	2026-05-31 05:40:52.981
+cmptcpxr5000pqiia81vuges4	Fix mobile responsiveness on dashboard sidebar navigation	Use tailwind screen sizes or custom media queries to collapse sidebar on small devices.	COMPLETED	HIGH	\N	\N	t	\N	\N	4	2026-05-30 05:40:52.351	cmptcpwqi0005qiia9lg94gpe	\N	2026-05-31 05:40:53.153	2026-05-31 05:40:53.153
+cmptcpxsp000qqiia1ckx2omo	Avocado (x4) - ripe	\N	NORMAL	NONE	\N	\N	t	\N	\N	1	\N	cmptcpws40006qiiazvbfy2jf	\N	2026-05-31 05:40:53.209	2026-05-31 05:40:53.209
+cmptcpxu9000rqiiazkel8krr	Fresh spinach leaves	\N	NORMAL	NONE	\N	\N	t	\N	\N	2	\N	cmptcpws40006qiiazvbfy2jf	\N	2026-05-31 05:40:53.265	2026-05-31 05:40:53.265
+cmptcpxvu000sqiia66bi5pt0	Sourdough bread loaf	\N	COMPLETED	LOW	\N	\N	t	\N	\N	3	2026-05-30 05:40:52.351	cmptcpws40006qiiazvbfy2jf	\N	2026-05-31 05:40:53.322	2026-05-31 05:40:53.322
+cmptcpxxf000tqiia3roi5xbj	Q2 Architecture & Service Planning	Review system block diagrams, microservice bounds, and data caching policy.	NORMAL	HIGH	2026-05-31 05:40:53.378	2026-06-06 05:40:53.378	t	\N	\N	1	\N	cmptcpwtq0007qiiag4gx708f	\N	2026-05-31 05:40:53.379	2026-05-31 05:40:53.379
+cmptcpy0m000vqiia6yr0u0l8	Sprint 5 Engineering Team Retrospective	Highlight wins, friction points, and action items for next sprint cycles.	COMPLETED	MEDIUM	2026-05-30 05:40:52.351	2026-05-30 05:40:52.351	t	\N	\N	2	2026-05-30 05:40:52.351	cmptcpwtq0007qiiag4gx708f	\N	2026-05-31 05:40:53.494	2026-05-31 05:40:53.494
+cmptcpy27000wqiiavla0r31t	Cardio: 5km morning run	Keep steady heart rate in zone 3 (130-150 bpm). Goal: sub 28 mins.	NORMAL	MEDIUM	2026-06-01 05:40:52.351	2026-06-01 05:40:52.351	t	\N	\N	1	\N	cmptcpwvb0008qiiant11lgp9	\N	2026-05-31 05:40:53.551	2026-05-31 05:40:53.551
+cmptcpy3s000xqiiad2ic9plj	Weight training: Upper body strength	Bench press, shoulder press, pull-ups, and bicep curls.	COMPLETED	HIGH	2026-05-30 05:40:52.351	2026-05-30 05:40:52.351	t	\N	\N	2	2026-05-30 05:40:52.351	cmptcpwvb0008qiiant11lgp9	\N	2026-05-31 05:40:53.608	2026-05-31 05:40:53.608
+cmptjrjes000qcaia557m6kg9	Add focus score	User's should be able to know if they actually spend time on their timebox	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:58:05.188	2026-05-31 08:58:35.018
+cmptn9y6k0001m7iadugshqk0	Create tests for websites	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 10:36:22.988	2026-05-31 10:36:28.167
+cmptip6xq000hcaiax58nrnaf	Custom emojis on lists	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:28:16.094	2026-05-31 08:28:23.893
+cmptiegx70008caia2kmbw5b9	Sidebar should take up full height	\N	NORMAL	MEDIUM	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:19:55.819	2026-05-31 08:25:25.75
+cmptil91e000dcaiaq2v2jxsh	Edit and delete lists	\N	NORMAL	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:25:12.194	2026-05-31 08:25:29.593
+cmptimq8v000ecaiasrknieb4	Remove date on "Today" calendar	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:26:21.151	2026-05-31 08:27:19.332
+cmptinlp3000fcaia7wo41uyf	Page shouldn't be scrollable, only task list.	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:27:01.911	2026-05-31 08:27:25.937
+cmptif45a0009caiajj4rglpt	Tags should be searchable	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:20:25.918	2026-05-31 08:27:31.303
+cmptikkuk000ccaia844ht50z	Re-order tasks	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:24:40.844	2026-05-31 08:27:34.099
+cmptifiss000acaiab8a8gos9	Fix pressing enter triggers priority	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:41:16.193	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:20:44.908	2026-05-31 10:41:16.193
+cmptihjup000bcaiauhvvlb63	Add loading screen on pages	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:35:33.913	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:22:19.585	2026-05-31 10:35:33.914
+cmptiv3mn000jcaiaxylewbwo	Kanban view	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:32:51.743	2026-05-31 08:33:02.95
+cmptj4ihh000lcaia9fqs86u6	Add sections to task list	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:40:10.901	2026-05-31 08:40:10.901
+cmptj4xc3000mcaiah6lofdjp	BUG: Double inbox	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:40:30.147	2026-05-31 08:40:30.147
+cmptj9ds0000ncaiar28c7yln	Make search a dedicated page and modal	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:43:58.08	2026-05-31 08:43:58.08
+cmptiwv3b000kcaia97jg2fgu	Add subtasks	\N	NORMAL	NONE	\N	2026-05-04 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:34:13.991	2026-05-31 08:44:16.228
+cmptja7k0000ocaiab4htq7c5	Add directly to calendar	\N	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:44:36.672	2026-05-31 08:44:36.672
+cmptjrfsx000pcaiaexa212ma	Add focus mode on tasks	\N	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:58:00.513	2026-05-31 08:58:00.513
+cmptjtsmf000rcaiaqeiin1or	Create backup of DB	\N	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:59:50.439	2026-05-31 08:59:50.439
+cmptionza000gcaiahhyconko	Add sort by and group by on tasks	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:28:52.767	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:27:51.526	2026-05-31 10:28:52.78
+cmptn99am0000m7iahvkrkkoo	Add task complete animation and sound	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 10:35:50.734	2026-05-31 10:35:50.734
+cmptiprf0000icaialqeqvr6m	BUG: Pressing the components adds the task	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:41:03.261	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:28:42.636	2026-05-31 10:41:03.262
+cmptnkwky0003m7ia8kcv8dkf	Backup Prisma Postgres DB	\N	NORMAL	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 10:44:54.13	2026-05-31 10:44:54.13
+\.
+
+
+--
+-- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) FROM stdin;
+bdb2aca0-0554-42e9-8b48-d4db8763f83e	19ff39b29761a0224432676414e1f70cb2445ec7d763145d471b56b62ed34349	2026-05-30 22:41:52.702169+00	20260530085023_init	\N	\N	2026-05-30 22:41:50.204976+00	1
+1acf7cd5-a8a1-485f-ae8c-fa7914553442	aa893fd5df487045e9f72c2251e56263e9d6d2c837a17f212713230e07d4db65	2026-05-30 22:41:54.136333+00	20260530132527_init	\N	\N	2026-05-30 22:41:52.793419+00	1
+\.
+
+
+--
+-- Data for Name: account; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public.account (id, "accountId", "providerId", "userId", "accessToken", "refreshToken", "idToken", "accessTokenExpiresAt", "refreshTokenExpiresAt", scope, password, "createdAt", "updatedAt") FROM stdin;
+THrlILJewGzUyjzm0pyP9mFPaACpBFlc	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	credential	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	\N	\N	\N	\N	\N	\N	db06141259503ae63541616891c177e4:f337d63ac0e0fb3a9bf60772bf581c628c374273665acc01587d6ce7b9abd3b76787713c5254e06419912ffc932deb1f36d6a7de2703facdbb207ccd28f76ba7	2026-05-31 05:50:45.489	2026-05-31 05:50:45.489
+\.
+
+
+--
+-- Data for Name: session; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public.session (id, "expiresAt", token, "createdAt", "updatedAt", "ipAddress", "userAgent", "userId") FROM stdin;
+KDGztOlPJz6xDrVBh9J0f4GhMadZn48m	2026-06-07 05:50:45.542	gIzcVZhGlZo9nX2R1iT6H2ONBQVSUXjc	2026-05-31 05:50:45.542	2026-05-31 05:50:45.542	0000:0000:0000:0000:0000:0000:0000:0000	Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36	0U341mhz8xQgBioZwhgO9U3YngfNjWwX
+\.
+
+
+--
+-- Data for Name: user; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public."user" (id, email, name, "avatarUrl", "passwordHash", timezone, "createdAt", "updatedAt", "emailVerified", image) FROM stdin;
+cmptcpwif0000qiiahsn8l2i0	jane@example.com	Jane Doe	\N	$2b$10$xyz123abc456def789ghiO5a8c9d10e11f12g13h14i15j16k17l	America/New_York	2026-05-31 05:40:51.544	2026-05-31 05:40:51.544	f	\N
+cmptcpwk30001qiia7e6fee30	john@example.com	John Smith	\N	$2b$10$xyz123abc456def789ghiO5a8c9d10e11f12g13h14i15j16k17l	Europe/London	2026-05-31 05:40:51.603	2026-05-31 05:40:51.603	f	\N
+0U341mhz8xQgBioZwhgO9U3YngfNjWwX	janlancelotm@gmail.com	Jan Lancelot Mailig	\N	\N	UTC	2026-05-31 05:50:45.433	2026-05-31 05:50:45.433	f	\N
+\.
+
+
+--
+-- Data for Name: verification; Type: TABLE DATA; Schema: public; Owner: prisma_migration
+--
+
+COPY public.verification (id, identifier, value, "expiresAt", "createdAt", "updatedAt") FROM stdin;
+\.
+
+
+--
+-- Name: Attachment Attachment_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Attachment"
+    ADD CONSTRAINT "Attachment_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: FocusRecord FocusRecord_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."FocusRecord"
+    ADD CONSTRAINT "FocusRecord_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Folder Folder_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Folder"
+    ADD CONSTRAINT "Folder_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: HabitRecord HabitRecord_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."HabitRecord"
+    ADD CONSTRAINT "HabitRecord_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Habit Habit_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Habit"
+    ADD CONSTRAINT "Habit_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: ProjectMember ProjectMember_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."ProjectMember"
+    ADD CONSTRAINT "ProjectMember_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Project Project_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Project"
+    ADD CONSTRAINT "Project_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Reminder Reminder_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Reminder"
+    ADD CONSTRAINT "Reminder_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: TagTask TagTask_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."TagTask"
+    ADD CONSTRAINT "TagTask_pkey" PRIMARY KEY ("tagId", "taskId");
+
+
+--
+-- Name: Tag Tag_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Tag"
+    ADD CONSTRAINT "Tag_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Task Task_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Task"
+    ADD CONSTRAINT "Task_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public._prisma_migrations
+    ADD CONSTRAINT _prisma_migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: session session_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT session_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: user user_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."user"
+    ADD CONSTRAINT user_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: verification verification_pkey; Type: CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public.verification
+    ADD CONSTRAINT verification_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: HabitRecord_habitId_date_key; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE UNIQUE INDEX "HabitRecord_habitId_date_key" ON public."HabitRecord" USING btree ("habitId", date);
+
+
+--
+-- Name: ProjectMember_projectId_userId_key; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE UNIQUE INDEX "ProjectMember_projectId_userId_key" ON public."ProjectMember" USING btree ("projectId", "userId");
+
+
+--
+-- Name: Tag_userId_name_key; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE UNIQUE INDEX "Tag_userId_name_key" ON public."Tag" USING btree ("userId", name);
+
+
+--
+-- Name: account_userId_idx; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE INDEX "account_userId_idx" ON public.account USING btree ("userId");
+
+
+--
+-- Name: session_token_key; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE UNIQUE INDEX session_token_key ON public.session USING btree (token);
+
+
+--
+-- Name: session_userId_idx; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE INDEX "session_userId_idx" ON public.session USING btree ("userId");
+
+
+--
+-- Name: user_email_key; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE UNIQUE INDEX user_email_key ON public."user" USING btree (email);
+
+
+--
+-- Name: verification_identifier_idx; Type: INDEX; Schema: public; Owner: prisma_migration
+--
+
+CREATE INDEX verification_identifier_idx ON public.verification USING btree (identifier);
+
+
+--
+-- Name: Attachment Attachment_taskId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Attachment"
+    ADD CONSTRAINT "Attachment_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES public."Task"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: FocusRecord FocusRecord_taskId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."FocusRecord"
+    ADD CONSTRAINT "FocusRecord_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES public."Task"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: FocusRecord FocusRecord_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."FocusRecord"
+    ADD CONSTRAINT "FocusRecord_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Folder Folder_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Folder"
+    ADD CONSTRAINT "Folder_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: HabitRecord HabitRecord_habitId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."HabitRecord"
+    ADD CONSTRAINT "HabitRecord_habitId_fkey" FOREIGN KEY ("habitId") REFERENCES public."Habit"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Habit Habit_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Habit"
+    ADD CONSTRAINT "Habit_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: ProjectMember ProjectMember_projectId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."ProjectMember"
+    ADD CONSTRAINT "ProjectMember_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES public."Project"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: ProjectMember ProjectMember_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."ProjectMember"
+    ADD CONSTRAINT "ProjectMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Project Project_folderId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Project"
+    ADD CONSTRAINT "Project_folderId_fkey" FOREIGN KEY ("folderId") REFERENCES public."Folder"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: Project Project_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Project"
+    ADD CONSTRAINT "Project_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Reminder Reminder_taskId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Reminder"
+    ADD CONSTRAINT "Reminder_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES public."Task"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: TagTask TagTask_tagId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."TagTask"
+    ADD CONSTRAINT "TagTask_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES public."Tag"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: TagTask TagTask_taskId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."TagTask"
+    ADD CONSTRAINT "TagTask_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES public."Task"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Tag Tag_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Tag"
+    ADD CONSTRAINT "Tag_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Task Task_parentId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Task"
+    ADD CONSTRAINT "Task_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES public."Task"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Task Task_projectId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public."Task"
+    ADD CONSTRAINT "Task_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES public."Project"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: account account_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: session session_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: prisma_migration
+--
+
+ALTER TABLE ONLY public.session
+    ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."user"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: prisma_migration
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict QWj0ZnPwueUmo75ABJfpvYIaKDg92GzS1UkDIMEVcQFUECqstLsTQqJaZz9kd8z
+

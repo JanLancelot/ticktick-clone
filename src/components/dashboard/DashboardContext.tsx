@@ -242,11 +242,33 @@ export function DashboardProvider({
   const completedPercentage =
     totalFilteredCount > 0 ? Math.round((completedFiltered.length / totalFilteredCount) * 100) : 0
 
+  // Wrap projectsHook.deleteProject to clean up local tasks & active tab
+  const handleDeleteProject = React.useCallback(async (id: string) => {
+    // 1. Reassign tasks belonging to this project to inbox
+    const updatedTasks = tasksHook.tasks.map((t) =>
+      t.projectId === id ? { ...t, projectId: "inbox" } : t
+    )
+    tasksHook.saveTasks(updatedTasks)
+
+    // 2. Delete project from hook
+    await projectsHook.deleteProject(id)
+
+    // 3. If active tab is the deleted project, redirect to today
+    if (activeTab === id) {
+      setActiveTab("today")
+    }
+  }, [tasksHook, projectsHook, activeTab, setActiveTab])
+
+  const customizedProjectsHook = {
+    ...projectsHook,
+    deleteProject: handleDeleteProject,
+  }
+
   return (
     <DashboardContext.Provider
       value={{
         user,
-        projectsHook,
+        projectsHook: customizedProjectsHook,
         tasksHook,
         habitsHook,
         pomodoroHook,

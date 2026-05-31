@@ -22,13 +22,15 @@ import {
   Flame,
   Timer,
   Search,
+  Settings,
 } from "lucide-react"
-import { AddProjectForm } from "@/src/features/projects"
+import { AddProjectForm, EditProjectModal, type Project } from "@/src/features/projects"
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const dashboard = useDashboard()
+  const [editingProject, setEditingProject] = React.useState<Project | null>(null)
 
   const {
     user,
@@ -120,9 +122,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         className={`
         ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} 
         md:translate-x-0 
-        fixed md:static inset-y-0 left-0 
+        fixed md:sticky md:top-0 inset-y-0 left-0 
         ${activeModule === "tasks" ? "w-[320px] md:w-[320px]" : "w-16 md:w-16"}
-        flex z-50 transition-all duration-300 ease-in-out shadow-lg md:shadow-none h-full bg-card border-r border-border/80 overflow-hidden
+        flex z-50 transition-all duration-300 ease-in-out shadow-lg md:shadow-none h-screen bg-card border-r border-border/80 overflow-hidden
       `}
       >
         {/* Column 1: Tiny Column (Width w-16, always visible) */}
@@ -403,12 +405,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </button>
                   </div>
 
-                  {projectsHook.showAddProject && (
-                    <AddProjectForm
-                      onAddProject={projectsHook.addProject}
-                      onCancel={() => projectsHook.setShowAddProject(false)}
-                    />
-                  )}
+
 
                   <div className="px-3 space-y-0.5">
                     {projectsHook.projects.map((proj) => {
@@ -418,36 +415,58 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         !showOnlyCompleted &&
                         !showTrash
                       return (
-                        <button
+                        <div
                           key={proj.id}
-                          onClick={() => {
-                            router.push("/")
-                            setActiveTab(proj.id)
-                            setSelectedTagFilter(null)
-                            setShowOnlyCompleted(false)
-                            setShowTrash(false)
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/15"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                          }`}
+                          className="group relative w-full flex items-center justify-between rounded-xl text-xs font-semibold transition-all select-none"
                         >
-                          <div className="flex items-center gap-2.5 truncate">
-                            <span
-                              className="h-2 w-2 rounded-full shrink-0"
-                              style={{ backgroundColor: proj.color }}
-                            />
-                            <span className="truncate">{proj.name}</span>
-                          </div>
-                          <span
-                            className={`text-[10px] font-bold ${
-                              isSelected ? "text-primary-foreground/80" : "text-muted-foreground/60"
-                            } shrink-0`}
+                          <button
+                            onClick={() => {
+                              router.push("/")
+                              setActiveTab(proj.id)
+                              setSelectedTagFilter(null)
+                              setShowOnlyCompleted(false)
+                              setShowTrash(false)
+                            }}
+                            className={`flex-1 flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-all ${
+                              isSelected
+                                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/15"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
                           >
-                            {getUncompletedCount(proj.id)}
-                          </span>
-                        </button>
+                            <div className="flex items-center gap-2.5 truncate pr-6">
+                              {proj.icon ? (
+                                <span className="text-sm shrink-0 select-none leading-none">{proj.icon}</span>
+                              ) : (
+                                <span
+                                  className="h-2 w-2 rounded-full shrink-0"
+                                  style={{ backgroundColor: proj.color }}
+                                />
+                              )}
+                              <span className="truncate">{proj.name}</span>
+                            </div>
+                            <span
+                              className={`text-[10px] font-bold shrink-0 transition-opacity duration-200 group-hover:opacity-0 ${
+                                isSelected ? "text-primary-foreground/80" : "text-muted-foreground/60"
+                              }`}
+                            >
+                              {getUncompletedCount(proj.id)}
+                            </span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingProject(proj)
+                            }}
+                            className={`absolute right-2 p-1 rounded-md cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity transition-colors ${
+                              isSelected
+                                ? "hover:bg-primary-foreground/10 text-primary-foreground/90"
+                                : "hover:bg-muted-foreground/10 text-muted-foreground hover:text-foreground"
+                            }`}
+                            title="List Settings"
+                          >
+                            <Settings className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       )
                     })}
                   </div>
@@ -676,6 +695,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Dynamic routed panels */}
         <div className="flex-1">{children}</div>
       </main>
+
+      {/* Edit List Modal */}
+      {editingProject && (
+        <EditProjectModal
+          project={editingProject}
+          onSave={projectsHook.updateProject}
+          onDelete={projectsHook.deleteProject}
+          onClose={() => setEditingProject(null)}
+        />
+      )}
+
+      {/* Create List Modal */}
+      {projectsHook.showAddProject && (
+        <EditProjectModal
+          mode="create"
+          onSave={async (id, name, color, icon) => {
+            await projectsHook.addProject(name, color, icon)
+          }}
+          onClose={() => projectsHook.setShowAddProject(false)}
+        />
+      )}
     </div>
   )
 }

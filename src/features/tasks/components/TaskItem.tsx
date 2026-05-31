@@ -6,6 +6,7 @@ interface Project {
   id: string
   name: string
   color: string
+  icon?: string | null
 }
 
 interface TaskItemProps {
@@ -133,7 +134,7 @@ export function TaskItem({
                   backgroundColor: `${project.color}08`,
                 }}
               >
-                📁 {project.name}
+                {project.icon ? `${project.icon} ` : "📁 "}{project.name}
               </span>
             )}
 

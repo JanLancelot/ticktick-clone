@@ -5,6 +5,7 @@ export interface ListProject {
   id: string
   name: string
   color: string
+  icon?: string | null
 }
 
 interface ListDropdownProps {
@@ -18,6 +19,8 @@ interface ListDropdownProps {
 export function ListDropdown({ value, projects, onChange, direction = "up" }: ListDropdownProps) {
   const [open, setOpen] = useState(false)
 
+  const matchedProj = projects.find((p) => p.id === value)
+
   return (
     <div className="relative flex items-center">
       <button
@@ -28,14 +31,16 @@ export function ListDropdown({ value, projects, onChange, direction = "up" }: Li
       >
         {value === "inbox" ? (
           <Inbox className="h-4 w-4 text-primary shrink-0" />
+        ) : matchedProj?.icon ? (
+          <span className="text-xs shrink-0 select-none">{matchedProj.icon}</span>
         ) : (
           <span
             className="h-2.5 w-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: projects.find((p) => p.id === value)?.color || "#ccc" }}
+            style={{ backgroundColor: matchedProj?.color || "#ccc" }}
           />
         )}
         <span className="truncate max-w-[120px]">
-          {value === "inbox" ? "Inbox" : projects.find((p) => p.id === value)?.name || "Inbox"}
+          {value === "inbox" ? "Inbox" : matchedProj?.name || "Inbox"}
         </span>
       </button>
 
@@ -80,10 +85,14 @@ export function ListDropdown({ value, projects, onChange, direction = "up" }: Li
                   }`}
                 >
                   <div className="flex items-center gap-2.5 truncate">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: proj.color }}
-                    />
+                    {proj.icon ? (
+                      <span className="text-xs shrink-0 select-none">{proj.icon}</span>
+                    ) : (
+                      <span
+                        className="h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: proj.color }}
+                      />
+                    )}
                     <span className="truncate">{proj.name}</span>
                   </div>
                   {isSelected && <span className="text-primary font-black">✓</span>}

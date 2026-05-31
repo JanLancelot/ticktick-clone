@@ -80,17 +80,20 @@ export async function getDashboardData() {
       completed: t.status === "COMPLETED",
       priority: t.priority,
       dueDate: t.dueDate ? t.dueDate.toISOString().split("T")[0] : null,
-      projectId: t.projectId || "inbox",
+      projectId: (t.projectId === null || t.projectId === inboxProject?.id) ? "inbox" : t.projectId,
       tags: t.tags.map((tt) => tt.tag.name),
       content: t.content,
     }))
 
     // Transform database projects to client format
-    const projects = userProjects.map((p) => ({
-      id: p.id,
-      name: p.name,
-      color: p.color || "#94a3b8",
-    }))
+    const projects = userProjects
+      .filter((p) => p.id !== inboxProject?.id)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        color: p.color || "#94a3b8",
+        icon: p.icon || null,
+      }))
 
     // Transform database habits to client format
     const habits = dbHabits.map((h) => {
@@ -225,7 +228,7 @@ export async function deleteTaskAction(taskId: string) {
 }
 
 // 5. Create a new custom list/project
-export async function createProjectAction(name: string, color: string) {
+export async function createProjectAction(name: string, color: string, icon?: string | null) {
   const session = await getSession()
   if (!session) return { success: false, error: "UNAUTHORIZED" }
 
@@ -235,6 +238,7 @@ export async function createProjectAction(name: string, color: string) {
       data: {
         name,
         color,
+        icon: icon || null,
         userId,
         kind: "LIST",
       },
@@ -242,6 +246,48 @@ export async function createProjectAction(name: string, color: string) {
     return { success: true, projectId: project.id }
   } catch (error: any) {
     console.error("Database error in createProjectAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 5b. Update an existing custom list/project
+export async function updateProjectAction(
+  projectId: string,
+  updates: { name?: string; color?: string; icon?: string | null }
+) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const data: any = {}
+    if (updates.name !== undefined) data.name = updates.name
+    if (updates.color !== undefined) data.color = updates.color
+    if (updates.icon !== undefined) data.icon = updates.icon
+
+    await prisma.project.update({
+      where: { id: projectId },
+      data,
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in updateProjectAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 5c. Delete a custom list/project
+export async function deleteProjectAction(projectId: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    // Delete the project
+    await prisma.project.delete({
+      where: { id: projectId },
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in deleteProjectAction:", error)
     return { success: false, error: "DATABASE_UNAVAILABLE" }
   }
 }
