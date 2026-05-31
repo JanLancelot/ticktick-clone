@@ -6,4 +6,6 @@ export interface Task {
   dueDate: string | null // YYYY-MM-DD
   projectId: string // 'inbox' or list ID
   tags: string[]
+  content?: string | null // rich text / markdown notes
 }
+

@@ -539,7 +539,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col p-6 md:p-8 lg:p-10 max-w-6xl mx-auto w-full space-y-6">
+      <main
+        className={`flex-1 flex flex-col p-6 md:p-8 lg:p-10 w-full space-y-6 ${
+          activeModule === "tasks"
+            ? "max-w-none lg:pr-[540px]"
+            : "max-w-6xl mx-auto"
+        }`}
+      >
         {/* Dynamic Header Section */}
         <section className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-card to-card/50 border border-border p-6 rounded-2xl shadow-xs relative overflow-hidden">
           {/* Subtle decoration */}

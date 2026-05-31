@@ -1,11 +1,11 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from "react"
-import { useProjectsState, Project } from "@/src/features/projects"
+import { useProjectsState } from "@/src/features/projects"
 import { useTasksState, Task } from "@/src/features/tasks"
-import { useHabitsState, Habit } from "@/src/features/habits"
+import { useHabitsState } from "@/src/features/habits"
 import { usePomodoroState } from "@/src/features/focus"
-import { getDashboardData } from "@/src/app/actions"
+import { getDashboardData, updateTaskAction } from "@/src/app/actions"
 
 interface UserSession {
   name: string
@@ -40,6 +40,20 @@ interface DashboardContextType {
   newTaskDueDate: string
   setNewTaskDueDate: React.Dispatch<React.SetStateAction<string>>
 
+  // Selected Task Detail Edit State
+  selectedTaskId: string | null
+  setSelectedTaskId: React.Dispatch<React.SetStateAction<string | null>>
+  updateTask: (
+    taskId: string,
+    updates: {
+      title?: string
+      content?: string | null
+      priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
+      dueDate?: string | null
+      projectId?: string | null
+    }
+  ) => Promise<void>
+
   // Computed helper values
   activeFiltered: Task[]
   completedFiltered: Task[]
@@ -66,6 +80,9 @@ export function DashboardProvider({
   const [showTrash, setShowTrash] = useState(false)
   const [calendarDate, setCalendarDate] = useState(new Date())
   const [newTaskDueDate, setNewTaskDueDate] = useState<string>("")
+
+  // Task selection details editor state
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
 
   // Clean sub-feature hooks for state management
   const projectsHook = useProjectsState()
@@ -100,6 +117,40 @@ export function DashboardProvider({
 
     loadData()
   }, [])
+
+  // Update specific task locally & DB sync
+  const updateTask = async (
+    taskId: string,
+    updates: {
+      title?: string
+      content?: string | null
+      priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
+      dueDate?: string | null
+      projectId?: string | null
+    }
+  ) => {
+    // Optimistic state update
+    const updatedTasks = tasksHook.tasks.map((t) => {
+      if (t.id === taskId) {
+        return {
+          ...t,
+          ...updates,
+          projectId: (updates.projectId === null || updates.projectId === "inbox")
+            ? "inbox"
+            : (updates.projectId || t.projectId),
+        }
+      }
+      return t
+    })
+
+    tasksHook.saveTasks(updatedTasks)
+
+    // Call server action to update PostgreSQL
+    const res = await updateTaskAction(taskId, updates)
+    if (!res.success) {
+      console.error("Failed to sync task updates to database:", res.error)
+    }
+  }
 
   // Filter Tasks for selected view
   const getFilteredTasks = () => {
@@ -180,6 +231,9 @@ export function DashboardProvider({
         setCalendarDate,
         newTaskDueDate,
         setNewTaskDueDate,
+        selectedTaskId,
+        setSelectedTaskId,
+        updateTask,
         activeFiltered,
         completedFiltered,
         totalFilteredCount,

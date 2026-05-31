@@ -15,6 +15,8 @@ interface TaskItemProps {
   onDelete: (id: string) => void
   onSelectFocus?: (id: string) => void
   isFocusSelected?: boolean
+  isRowSelected?: boolean
+  onRowClick?: (id: string) => void
 }
 
 export function TaskItem({
@@ -24,6 +26,8 @@ export function TaskItem({
   onDelete,
   onSelectFocus,
   isFocusSelected = false,
+  isRowSelected = false,
+  onRowClick,
 }: TaskItemProps) {
   const getTodayDateString = () => new Date().toISOString().split("T")[0]
 
@@ -44,10 +48,20 @@ export function TaskItem({
 
   if (task.completed) {
     return (
-      <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/60 bg-muted/10 opacity-70 group hover:opacity-90 transition-opacity">
+      <div
+        onClick={() => onRowClick && onRowClick(task.id)}
+        className={`flex items-center justify-between p-3.5 rounded-xl border transition-all group opacity-70 hover:opacity-90 cursor-pointer ${
+          isRowSelected
+            ? "ring-2 ring-primary/80 bg-primary/5 border-primary/40 shadow-xs scale-[1.01]"
+            : "border-border/60 bg-muted/10"
+        }`}
+      >
         <div className="flex items-center gap-3.5 min-w-0">
           <button
-            onClick={() => onToggle(task.id)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggle(task.id)
+            }}
             className="focus:outline-none cursor-pointer text-green-500 shrink-0"
           >
             <CheckCircle2 className="h-5 w-5 fill-green-500 text-card hover:scale-[0.98] transition-transform" />
@@ -57,7 +71,10 @@ export function TaskItem({
           </p>
         </div>
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete(task.id)
+          }}
           className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg border border-border/80 bg-background hover:bg-destructive/10 text-muted-foreground hover:text-destructive hover:border-destructive/25 transition-all cursor-pointer"
           title="Delete Task"
         >
@@ -69,13 +86,21 @@ export function TaskItem({
 
   return (
     <div
-      className={`flex items-center justify-between p-4 rounded-xl border border-border transition-all group ${getPriorityStyle(
+      onClick={() => onRowClick && onRowClick(task.id)}
+      className={`flex items-center justify-between p-4 rounded-xl border transition-all group ${getPriorityStyle(
         task.priority
-      )} shadow-2xs`}
+      )} shadow-2xs cursor-pointer ${
+        isRowSelected
+          ? "ring-2 ring-primary/95 bg-primary/5 border-primary/45 shadow-xs scale-[1.01]"
+          : "border-border"
+      }`}
     >
       <div className="flex items-center gap-3.5 min-w-0">
         <button
-          onClick={() => onToggle(task.id)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggle(task.id)
+          }}
           className="focus:outline-none cursor-pointer text-muted-foreground/60 hover:text-primary transition-colors shrink-0"
         >
           <Circle className="h-5 w-5 hover:scale-105 transition-transform" />
@@ -127,7 +152,10 @@ export function TaskItem({
       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {onSelectFocus && (
           <button
-            onClick={() => onSelectFocus(task.id)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onSelectFocus(task.id)
+            }}
             title="Focus on this"
             className={`p-1.5 rounded-lg border border-border bg-background hover:bg-orange-50/50 hover:text-orange-500 cursor-pointer ${
               isFocusSelected ? "text-orange-500 bg-orange-50/50" : "text-muted-foreground"
@@ -137,7 +165,10 @@ export function TaskItem({
           </button>
         )}
         <button
-          onClick={() => onDelete(task.id)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete(task.id)
+          }}
           title="Delete Task"
           className="p-1.5 rounded-lg border border-border bg-background hover:bg-destructive/10 text-muted-foreground hover:text-destructive hover:border-destructive/20 cursor-pointer transition-colors active:scale-95"
         >

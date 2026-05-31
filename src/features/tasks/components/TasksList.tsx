@@ -17,6 +17,8 @@ interface TasksListProps {
   onDelete: (id: string) => void
   onSelectFocus?: (id: string) => void
   selectedTaskId?: string | null
+  activeSelectedTaskId?: string | null
+  onRowClick?: (id: string) => void
 }
 
 export function TasksList({
@@ -27,6 +29,8 @@ export function TasksList({
   onDelete,
   onSelectFocus,
   selectedTaskId,
+  activeSelectedTaskId,
+  onRowClick,
 }: TasksListProps) {
   const [completedExpanded, setCompletedExpanded] = useState(true)
 
@@ -57,6 +61,8 @@ export function TasksList({
                 onDelete={onDelete}
                 onSelectFocus={onSelectFocus}
                 isFocusSelected={selectedTaskId === task.id}
+                isRowSelected={activeSelectedTaskId === task.id}
+                onRowClick={onRowClick}
               />
             ))}
           </div>
@@ -87,6 +93,8 @@ export function TasksList({
                   projects={projects}
                   onToggle={onToggle}
                   onDelete={onDelete}
+                  isRowSelected={activeSelectedTaskId === task.id}
+                  onRowClick={onRowClick}
                 />
               ))}
             </div>

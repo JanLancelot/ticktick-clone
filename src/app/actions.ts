@@ -82,6 +82,7 @@ export async function getDashboardData() {
       dueDate: t.dueDate ? t.dueDate.toISOString().split("T")[0] : null,
       projectId: t.projectId || "inbox",
       tags: t.tags.map((tt) => tt.tag.name),
+      content: t.content,
     }))
 
     // Transform database projects to client format
@@ -307,3 +308,41 @@ export async function toggleHabitRecordAction(habitId: string, dateStr: string, 
     return { success: false, error: "DATABASE_UNAVAILABLE" }
   }
 }
+
+// 8. Update task properties (title, content, priority, dueDate, projectId)
+export async function updateTaskAction(
+  taskId: string,
+  updates: {
+    title?: string
+    content?: string | null
+    priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
+    dueDate?: string | null
+    projectId?: string | null
+  }
+) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const data: any = {}
+    if (updates.title !== undefined) data.title = updates.title
+    if (updates.content !== undefined) data.content = updates.content
+    if (updates.priority !== undefined) data.priority = updates.priority
+    if (updates.dueDate !== undefined) {
+      data.dueDate = updates.dueDate ? new Date(updates.dueDate) : null
+    }
+    if (updates.projectId !== undefined) {
+      data.projectId = updates.projectId === "inbox" ? null : updates.projectId
+    }
+
+    await prisma.task.update({
+      where: { id: taskId },
+      data,
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in updateTaskAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
