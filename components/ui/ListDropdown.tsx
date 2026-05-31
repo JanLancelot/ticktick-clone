@@ -11,9 +11,11 @@ interface ListDropdownProps {
   value: string
   projects: ListProject[]
   onChange: (projectId: string) => void
+  /** 'up' opens above the button, 'down' opens below. Default: 'up' */
+  direction?: "up" | "down"
 }
 
-export function ListDropdown({ value, projects, onChange }: ListDropdownProps) {
+export function ListDropdown({ value, projects, onChange, direction = "up" }: ListDropdownProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -42,7 +44,7 @@ export function ListDropdown({ value, projects, onChange }: ListDropdownProps) {
             className="fixed inset-0 z-40"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 bottom-full mb-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 p-1.5 flex flex-col gap-0.5 max-h-60 overflow-y-auto animate-fade-in select-none">
+          <div className={`absolute left-0 w-48 bg-card border border-border rounded-xl shadow-lg z-50 p-1.5 flex flex-col gap-0.5 max-h-60 overflow-y-auto animate-fade-in select-none ${direction === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}>
             {/* Inbox Option */}
             <button
               onClick={() => {

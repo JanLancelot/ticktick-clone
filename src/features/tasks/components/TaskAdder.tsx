@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PriorityDropdown, type Priority } from "@/components/ui/PriorityDropdown"
+import { ListDropdown, type ListProject } from "@/components/ui/ListDropdown"
+import { CalendarDropdown } from "@/components/ui/CalendarDropdown"
 import { Plus } from "lucide-react"
 
 interface Project {
@@ -29,7 +32,7 @@ export function TaskAdder({
   onAddTask,
 }: TaskAdderProps) {
   const [title, setTitle] = useState("")
-  const [priority, setPriority] = useState<"NONE" | "LOW" | "MEDIUM" | "HIGH">("NONE")
+  const [priority, setPriority] = useState<Priority>("NONE")
   const [dueDate, setDueDate] = useState("")
   const [projectId, setProjectId] = useState("inbox")
   const [tag, setTag] = useState("")
@@ -68,7 +71,7 @@ export function TaskAdder({
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-card border border-border p-4 rounded-2xl shadow-xs space-y-3.5 relative overflow-hidden"
+      className="bg-card border border-border p-4 rounded-2xl shadow-xs space-y-3.5 relative"
     >
       <div className="flex items-center gap-3">
         <Plus className="h-4.5 w-4.5 text-muted-foreground shrink-0" />
@@ -83,42 +86,26 @@ export function TaskAdder({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-3">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Priority Select */}
-          <div className="flex items-center gap-1">
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as any)}
-              className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-border bg-background/50 text-muted-foreground cursor-pointer focus:outline-none hover:bg-muted/30"
-            >
-              <option value="NONE">Priority: None</option>
-              <option value="LOW">Priority: Low</option>
-              <option value="MEDIUM">Priority: Med</option>
-              <option value="HIGH">Priority: High</option>
-            </select>
-          </div>
-
-          {/* Due date picker */}
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-border bg-background/50 text-muted-foreground cursor-pointer focus:outline-none hover:bg-muted/30"
+          {/* Priority Dropdown */}
+          <PriorityDropdown
+            value={priority}
+            onChange={(val) => setPriority(val)}
           />
 
-          {/* Project List Selector */}
+          {/* Calendar Dropdown */}
+          <CalendarDropdown
+            value={dueDate || null}
+            onChange={(date) => setDueDate(date || "")}
+          />
+
+          {/* List Dropdown */}
           {showProjectSelector && (
-            <select
+            <ListDropdown
               value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-border bg-background/50 text-muted-foreground cursor-pointer focus:outline-none hover:bg-muted/30"
-            >
-              <option value="inbox">Inbox</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+              projects={projects as ListProject[]}
+              onChange={(val) => setProjectId(val)}
+              direction="down"
+            />
           )}
 
           {/* Tag input */}
