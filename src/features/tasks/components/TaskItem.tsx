@@ -1,6 +1,6 @@
 import React from "react"
 import { Task } from "../types"
-import { Circle, CheckCircle2, Timer, Trash2 } from "lucide-react"
+import { Circle, CheckCircle2, Timer, Trash2, GripVertical } from "lucide-react"
 
 interface Project {
   id: string
@@ -18,6 +18,7 @@ interface TaskItemProps {
   isFocusSelected?: boolean
   isRowSelected?: boolean
   onRowClick?: (id: string) => void
+  isDraggable?: boolean
 }
 
 export function TaskItem({
@@ -29,6 +30,7 @@ export function TaskItem({
   isFocusSelected = false,
   isRowSelected = false,
   onRowClick,
+  isDraggable = false,
 }: TaskItemProps) {
   const getTodayDateString = () => new Date().toISOString().split("T")[0]
 
@@ -96,7 +98,12 @@ export function TaskItem({
           : "border-border"
       }`}
     >
-      <div className="flex items-center gap-3.5 min-w-0">
+      <div className="flex items-center gap-3.5 min-w-0 w-full">
+        {isDraggable && (
+          <div className="interactive-element cursor-grab hover:text-foreground/80 active:cursor-grabbing shrink-0 flex items-center justify-center p-0.5" title="Drag to reorder">
+            <GripVertical className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors" />
+          </div>
+        )}
         <button
           onClick={(e) => {
             e.stopPropagation()

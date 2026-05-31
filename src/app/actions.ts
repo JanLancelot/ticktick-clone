@@ -61,7 +61,10 @@ export async function getDashboardData() {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [
+        { sortOrder: "asc" },
+        { createdAt: "desc" }
+      ],
     })
 
     // Fetch habits
@@ -83,6 +86,7 @@ export async function getDashboardData() {
       projectId: (t.projectId === null || t.projectId === inboxProject?.id) ? "inbox" : t.projectId,
       tags: t.tags.map((tt) => tt.tag.name),
       content: t.content,
+      sortOrder: t.sortOrder,
     }))
 
     // Transform database projects to client format
@@ -391,4 +395,117 @@ export async function updateTaskAction(
     return { success: false, error: "DATABASE_UNAVAILABLE" }
   }
 }
+
+// 9. Reorder multiple tasks in a transaction
+export async function reorderTasksAction(taskIds: string[]) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    await prisma.$transaction(
+      taskIds.map((id, index) =>
+        prisma.task.update({
+          where: { id },
+          data: { sortOrder: index },
+        })
+      )
+    )
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in reorderTasksAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 10. Sync drag-and-drop task reordering and property updates in a transaction
+export async function syncTaskDragDropAction(
+  taskId: string,
+  updates: {
+    priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
+    dueDate?: string | null
+    projectId?: string | null
+    tags?: string[]
+  },
+  orderedIds: string[]
+) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const userId = session.user.id
+    const data: any = {}
+    if (updates.priority !== undefined) data.priority = updates.priority
+    if (updates.dueDate !== undefined) {
+      data.dueDate = updates.dueDate ? new Date(updates.dueDate) : null
+    }
+    if (updates.projectId !== undefined) {
+      data.projectId = updates.projectId === "inbox" ? null : updates.projectId
+    }
+
+    const prismaUpdates: any[] = []
+
+    // 1. Update the dragged task's properties if there are updates
+    if (Object.keys(data).length > 0) {
+      prismaUpdates.push(
+        prisma.task.update({
+          where: { id: taskId },
+          data,
+        })
+      )
+    }
+
+    // 2. Handle tags update if provided
+    let tagIdsToLink: string[] = []
+    if (updates.tags !== undefined) {
+      for (const tagName of updates.tags) {
+        const name = tagName.toLowerCase().trim()
+        if (!name) continue
+        let tag = await prisma.tag.findFirst({
+          where: { userId, name },
+        })
+        if (!tag) {
+          tag = await prisma.tag.create({
+            data: { name, userId },
+          })
+        }
+        tagIdsToLink.push(tag.id)
+      }
+
+      // Delete existing TagTask mappings for this task
+      prismaUpdates.push(
+        prisma.tagTask.deleteMany({
+          where: { taskId },
+        })
+      )
+
+      // Create new TagTask mappings
+      tagIdsToLink.forEach((tagId) => {
+        prismaUpdates.push(
+          prisma.tagTask.create({
+            data: { tagId, taskId },
+          })
+        )
+      })
+    }
+
+    // 3. Update the sort orders of all reordered tasks
+    orderedIds.forEach((id, index) => {
+      prismaUpdates.push(
+        prisma.task.update({
+          where: { id },
+          data: { sortOrder: index },
+        })
+      )
+    })
+
+    // Execute all updates in a transaction
+    await prisma.$transaction(prismaUpdates)
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in syncTaskDragDropAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+
 

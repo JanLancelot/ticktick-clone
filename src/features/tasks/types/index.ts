@@ -7,5 +7,6 @@ export interface Task {
   projectId: string // 'inbox' or list ID
   tags: string[]
   content?: string | null // rich text / markdown notes
+  sortOrder: number // Added to support custom sorting
 }
 

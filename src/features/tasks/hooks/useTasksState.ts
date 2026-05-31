@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react"
 import { Task } from "../types"
-import { createTaskAction, toggleTaskCompletionAction, deleteTaskAction } from "@/src/app/actions"
+import { createTaskAction, toggleTaskCompletionAction, deleteTaskAction, reorderTasksAction, syncTaskDragDropAction } from "@/src/app/actions"
 
 export function useTasksState(initialTasks: Task[] = []) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
@@ -28,7 +28,8 @@ export function useTasksState(initialTasks: Task[] = []) {
       priority,
       dueDate: dueDate || null,
       projectId: projectId || "inbox",
-      tags: tagStr.trim() ? [tagStr.trim().toLowerCase()] : []
+      tags: tagStr.trim() ? [tagStr.trim().toLowerCase()] : [],
+      sortOrder: 0
     }
 
     const currentTasks = [...tasks, tempTask]
@@ -76,6 +77,86 @@ export function useTasksState(initialTasks: Task[] = []) {
     await deleteTaskAction(taskId)
   }, [tasks, saveTasks])
 
+  const reorderTasks = useCallback(async (orderedIds: string[]) => {
+    const reorderedSet = new Set(orderedIds)
+    const taskMap = new Map(tasks.map(t => [t.id, t]))
+    const reorderedTasks = orderedIds.map(id => taskMap.get(id)).filter(Boolean) as Task[]
+    
+    let reorderIndex = 0
+    const updated = tasks.map(t => {
+      if (reorderedSet.has(t.id)) {
+        const matchingTask = reorderedTasks[reorderIndex++]
+        if (matchingTask) {
+          return {
+            ...matchingTask,
+            sortOrder: reorderIndex - 1
+          }
+        }
+      }
+      return t
+    })
+
+    saveTasks(updated)
+
+    // Call server action to update database
+    const res = await reorderTasksAction(orderedIds)
+    if (!res.success) {
+      console.error("Failed to sync task reordering to database:", res.error)
+    }
+  }, [tasks, saveTasks])
+
+  const reorderAndUpdateTask = useCallback(async (
+    taskId: string,
+    updates: {
+      priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
+      dueDate?: string | null
+      projectId?: string | null
+      tags?: string[]
+    },
+    orderedIds: string[]
+  ) => {
+    // 1. First, apply property updates to the dragged task in the local array
+    const updatedTasks = tasks.map(t => {
+      if (t.id === taskId) {
+        return {
+          ...t,
+          ...updates,
+          projectId: (updates.projectId === null || updates.projectId === "inbox")
+            ? "inbox"
+            : (updates.projectId || t.projectId)
+        }
+      }
+      return t
+    })
+
+    // 2. Apply relative in-place reordering using orderedIds
+    const reorderedSet = new Set(orderedIds)
+    const taskMap = new Map(updatedTasks.map(t => [t.id, t]))
+    const reorderedTasks = orderedIds.map(id => taskMap.get(id)).filter(Boolean) as Task[]
+    
+    let reorderIndex = 0
+    const finalTasks = updatedTasks.map(t => {
+      if (reorderedSet.has(t.id)) {
+        const matchingTask = reorderedTasks[reorderIndex++]
+        if (matchingTask) {
+          return {
+            ...matchingTask,
+            sortOrder: reorderIndex - 1
+          }
+        }
+      }
+      return t
+    })
+
+    saveTasks(finalTasks)
+
+    // 3. Sync changes using the new server action
+    const res = await syncTaskDragDropAction(taskId, updates, orderedIds)
+    if (!res.success) {
+      console.error("Failed to sync drag drop updates to database:", res.error)
+    }
+  }, [tasks, saveTasks])
+
   return {
     tasks,
     setTasks,
@@ -84,6 +165,8 @@ export function useTasksState(initialTasks: Task[] = []) {
     saveTasks,
     addTask,
     toggleTaskCompletion,
-    deleteTask
+    deleteTask,
+    reorderTasks,
+    reorderAndUpdateTask
   }
 }

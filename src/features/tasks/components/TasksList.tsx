@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Task } from "../types"
 import { TaskItem } from "./TaskItem"
 import { useDashboard, SortOption, GroupOption } from "@/src/components/dashboard/DashboardContext"
@@ -56,7 +56,7 @@ export function TasksList({
   onRowClick,
   isTrash = false,
 }: TasksListProps) {
-  const { sortBy, setSortBy, groupBy, setGroupBy, isLoading } = useDashboard()
+  const { sortBy, setSortBy, groupBy, setGroupBy, isLoading, tasksHook } = useDashboard()
   const [completedExpanded, setCompletedExpanded] = useState(true)
   const [groupOpen, setGroupOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
@@ -66,18 +66,26 @@ export function TasksList({
     const sorted = [...taskList]
     if (sortOpt === "priority") {
       const priorityWeights = { HIGH: 3, MEDIUM: 2, LOW: 1, NONE: 0 }
-      sorted.sort((a, b) => priorityWeights[b.priority] - priorityWeights[a.priority])
+      sorted.sort((a, b) => {
+        const diff = priorityWeights[b.priority] - priorityWeights[a.priority]
+        if (diff !== 0) return diff
+        return a.sortOrder - b.sortOrder
+      })
     } else if (sortOpt === "tag") {
       sorted.sort((a, b) => {
         const tagA = a.tags[0] || "\uFFFF"
         const tagB = b.tags[0] || "\uFFFF"
-        return tagA.localeCompare(tagB)
+        const diff = tagA.localeCompare(tagB)
+        if (diff !== 0) return diff
+        return a.sortOrder - b.sortOrder
       })
     } else if (sortOpt === "date") {
       sorted.sort((a, b) => {
         const dateA = a.dueDate || "9999-12-31"
         const dateB = b.dueDate || "9999-12-31"
-        return dateA.localeCompare(dateB)
+        const diff = dateA.localeCompare(dateB)
+        if (diff !== 0) return diff
+        return a.sortOrder - b.sortOrder
       })
     } else if (sortOpt === "title") {
       sorted.sort((a, b) => a.title.localeCompare(b.title))
@@ -218,6 +226,127 @@ export function TasksList({
   let processedActiveElements: React.ReactNode = null
   const sortedActive = sortTasks(activeTasks, sortBy)
 
+  const getVisualTasks = (): Task[] => {
+    if (groupBy === "none") {
+      return sortedActive
+    }
+    const activeGroups = groupTasks(activeTasks, groupBy)
+    activeGroups.forEach((group) => {
+      group.tasks = sortTasks(group.tasks, sortBy)
+    })
+    return activeGroups.flatMap((g) => g.tasks)
+  }
+
+  const currentVisualTasks = getVisualTasks()
+
+  const canDrag = sortBy !== "title" && !isTrash
+
+  const [localTasks, setLocalTasks] = useState<Task[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
+
+  // Keep local tasks in sync with current visual tasks when not dragging
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalTasks(currentVisualTasks)
+    }
+  }, [currentVisualTasks, isDragging])
+
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    const target = e.target as HTMLElement
+    // Prevent dragging when clicking interactive elements (checkbox, focus, delete buttons, etc.)
+    if (
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("a") ||
+      target.closest("svg")
+    ) {
+      e.preventDefault()
+      return
+    }
+
+    setDraggedTaskId(taskId)
+    setIsDragging(true)
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("text/plain", taskId)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDragEnter = (e: React.DragEvent, hoverIndex: number) => {
+    e.preventDefault()
+    if (draggedTaskId === null) return
+
+    const draggedIndex = localTasks.findIndex((t) => t.id === draggedTaskId)
+    if (draggedIndex === -1 || draggedIndex === hoverIndex) return
+
+    // Rearrange localTasks array visually in real-time
+    const updated = [...localTasks]
+    const [draggedItem] = updated.splice(draggedIndex, 1)
+    
+    // Determine the target neighbor to copy group properties from if grouped
+    const targetNeighbor = updated[hoverIndex] || updated[hoverIndex - 1]
+    const updatedDraggedItem = { ...draggedItem }
+
+    if (targetNeighbor && groupBy !== "none") {
+      if (groupBy === "priority") {
+        updatedDraggedItem.priority = targetNeighbor.priority
+      } else if (groupBy === "list") {
+        updatedDraggedItem.projectId = targetNeighbor.projectId
+      } else if (groupBy === "date") {
+        updatedDraggedItem.dueDate = targetNeighbor.dueDate
+      } else if (groupBy === "tag") {
+        updatedDraggedItem.tags = [...targetNeighbor.tags]
+      }
+    }
+
+    updated.splice(hoverIndex, 0, updatedDraggedItem)
+    setLocalTasks(updated)
+  }
+
+  const handleDragEnd = () => {
+    setIsDragging(false)
+    setDraggedTaskId(null)
+
+    const finalDraggedTask = localTasks.find((t) => t.id === draggedTaskId)
+    if (!finalDraggedTask || !draggedTaskId) return
+
+    // Prepare changes for drag-to-group
+    const updates: {
+      priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
+      dueDate?: string | null
+      projectId?: string | null
+      tags?: string[]
+    } = {}
+
+    if (groupBy === "priority") {
+      updates.priority = finalDraggedTask.priority
+    } else if (groupBy === "list") {
+      updates.projectId = finalDraggedTask.projectId
+    } else if (groupBy === "date") {
+      updates.dueDate = finalDraggedTask.dueDate
+    } else if (groupBy === "tag") {
+      updates.tags = finalDraggedTask.tags
+    }
+
+    const orderedIds = localTasks.map((t) => t.id)
+    if (tasksHook && tasksHook.reorderAndUpdateTask) {
+      tasksHook.reorderAndUpdateTask(draggedTaskId, updates, orderedIds)
+    }
+  }
+
+  const getRenderGroups = () => {
+    const groups = groupTasks(isDragging ? localTasks : activeTasks, groupBy)
+    if (!isDragging) {
+      groups.forEach((group) => {
+        group.tasks = sortTasks(group.tasks, sortBy)
+      })
+    }
+    return groups
+  }
+
   if (isLoading && activeTasks.length === 0) {
     processedActiveElements = (
       <div className="space-y-3">
@@ -255,28 +384,38 @@ export function TasksList({
     )
   } else if (groupBy === "none") {
     processedActiveElements = (
-      <div className="space-y-2.5">
-        {sortedActive.map((task) => (
-          <TaskItem
+      <div className="space-y-2.5 transition-all">
+        {(isDragging ? localTasks : sortedActive).map((task, index) => (
+          <div
             key={task.id}
-            task={task}
-            projects={projects}
-            onToggle={onToggle}
-            onDelete={onDelete}
-            onSelectFocus={onSelectFocus}
-            isFocusSelected={selectedTaskId === task.id}
-            isRowSelected={activeSelectedTaskId === task.id}
-            onRowClick={onRowClick}
-          />
+            draggable={canDrag}
+            onDragStart={(e) => handleDragStart(e, task.id)}
+            onDragOver={handleDragOver}
+            onDragEnter={(e) => handleDragEnter(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`transition-all duration-250 ${
+              draggedTaskId === task.id
+                ? "opacity-30 scale-[0.98] border border-dashed border-primary/30 rounded-xl"
+                : ""
+            }`}
+          >
+            <TaskItem
+              task={task}
+              projects={projects}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onSelectFocus={onSelectFocus}
+              isFocusSelected={selectedTaskId === task.id}
+              isRowSelected={activeSelectedTaskId === task.id}
+              onRowClick={onRowClick}
+              isDraggable={canDrag}
+            />
+          </div>
         ))}
       </div>
     )
   } else {
-    const activeGroups = groupTasks(activeTasks, groupBy)
-    // Sort within groups
-    activeGroups.forEach((group) => {
-      group.tasks = sortTasks(group.tasks, sortBy)
-    })
+    const activeGroups = getRenderGroups()
 
     processedActiveElements = (
       <div className="space-y-6">
@@ -292,19 +431,36 @@ export function TasksList({
               </span>
             </div>
             <div className="space-y-2 pl-3 border-l border-border/60 ml-2">
-              {group.tasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  projects={projects}
-                  onToggle={onToggle}
-                  onDelete={onDelete}
-                  onSelectFocus={onSelectFocus}
-                  isFocusSelected={selectedTaskId === task.id}
-                  isRowSelected={activeSelectedTaskId === task.id}
-                  onRowClick={onRowClick}
-                />
-              ))}
+              {group.tasks.map((task) => {
+                const taskIndex = localTasks.findIndex((t) => t.id === task.id)
+                return (
+                  <div
+                    key={task.id}
+                    draggable={canDrag}
+                    onDragStart={(e) => handleDragStart(e, task.id)}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, taskIndex !== -1 ? taskIndex : 0)}
+                    onDragEnd={handleDragEnd}
+                    className={`transition-all duration-250 ${
+                      draggedTaskId === task.id
+                        ? "opacity-30 scale-[0.98] border border-dashed border-primary/30 rounded-xl"
+                        : ""
+                    }`}
+                  >
+                    <TaskItem
+                      task={task}
+                      projects={projects}
+                      onToggle={onToggle}
+                      onDelete={onDelete}
+                      onSelectFocus={onSelectFocus}
+                      isFocusSelected={selectedTaskId === task.id}
+                      isRowSelected={activeSelectedTaskId === task.id}
+                      onRowClick={onRowClick}
+                      isDraggable={canDrag}
+                    />
+                  </div>
+                )
+              })}
             </div>
           </div>
         ))}
