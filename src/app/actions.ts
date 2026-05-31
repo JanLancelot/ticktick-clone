@@ -1,0 +1,309 @@
+"use server"
+
+import prisma from "@/src/lib/prisma"
+import { auth } from "@/src/lib/auth"
+import { headers } from "next/headers"
+
+// Helper to get authenticated session
+async function getSession() {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    })
+    return session
+  } catch (error) {
+    console.error("Failed to retrieve session from database:", error)
+    return null
+  }
+}
+
+// 1. Fetch all dashboard data for user
+export async function getDashboardData() {
+  const session = await getSession()
+  if (!session) {
+    return { success: false, error: "UNAUTHORIZED" }
+  }
+
+  try {
+    const userId = session.user.id
+
+    // Fetch or create default Inbox project
+    let userProjects = await prisma.project.findMany({
+      where: { userId },
+      orderBy: { sortOrder: "asc" },
+    })
+
+    let inboxProject = userProjects.find((p) => p.isDefault || p.kind === "INBOX")
+    if (!inboxProject) {
+      inboxProject = await prisma.project.create({
+        data: {
+          name: "Inbox",
+          kind: "INBOX",
+          isDefault: true,
+          userId,
+          color: "#3b82f6",
+        },
+      })
+      userProjects.push(inboxProject)
+    }
+
+    const projectIds = userProjects.map((p) => p.id)
+
+    // Fetch tasks belonging to user's projects
+    const dbTasks = await prisma.task.findMany({
+      where: {
+        projectId: { in: projectIds },
+      },
+      include: {
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    })
+
+    // Fetch habits
+    const dbHabits = await prisma.habit.findMany({
+      where: { userId },
+      include: {
+        records: true,
+      },
+      orderBy: { createdAt: "desc" },
+    })
+
+    // Transform database tasks to client format
+    const tasks = dbTasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      completed: t.status === "COMPLETED",
+      priority: t.priority,
+      dueDate: t.dueDate ? t.dueDate.toISOString().split("T")[0] : null,
+      projectId: t.projectId || "inbox",
+      tags: t.tags.map((tt) => tt.tag.name),
+    }))
+
+    // Transform database projects to client format
+    const projects = userProjects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      color: p.color || "#94a3b8",
+    }))
+
+    // Transform database habits to client format
+    const habits = dbHabits.map((h) => {
+      const records: Record<string, boolean> = {}
+      h.records.forEach((r) => {
+        records[r.date.toISOString().split("T")[0]] = true
+      })
+
+      return {
+        id: h.id,
+        name: h.name,
+        color: h.color || "#10b981",
+        streak: h.goal, // mapping goal/streak representation
+        records,
+      }
+    })
+
+    return {
+      success: true,
+      data: { tasks, projects, habits },
+    }
+  } catch (error: any) {
+    console.error("Database error in getDashboardData:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 2. Create a new task
+export async function createTaskAction(
+  title: string,
+  priority: "NONE" | "LOW" | "MEDIUM" | "HIGH",
+  dueDateStr: string | null,
+  projectId: string | null,
+  tagStr: string | null
+) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const userId = session.user.id
+    
+    // Find or create default Inbox project if none provided
+    let targetProjectId = projectId
+    if (!targetProjectId || targetProjectId === "inbox") {
+      let inbox = await prisma.project.findFirst({
+        where: { userId, kind: "INBOX" },
+      })
+      if (!inbox) {
+        inbox = await prisma.project.create({
+          data: {
+            name: "Inbox",
+            kind: "INBOX",
+            isDefault: true,
+            userId,
+            color: "#3b82f6",
+          },
+        })
+      }
+      targetProjectId = inbox.id
+    }
+
+    const task = await prisma.task.create({
+      data: {
+        title,
+        priority,
+        dueDate: dueDateStr ? new Date(dueDateStr) : null,
+        projectId: targetProjectId,
+        status: "NORMAL",
+      },
+    })
+
+    // Handle tag mapping if present
+    if (tagStr) {
+      const tagName = tagStr.toLowerCase().trim()
+      let tag = await prisma.tag.findFirst({
+        where: { userId, name: tagName },
+      })
+      if (!tag) {
+        tag = await prisma.tag.create({
+          data: { name: tagName, userId },
+        })
+      }
+      await prisma.tagTask.create({
+        data: {
+          tagId: tag.id,
+          taskId: task.id,
+        },
+      })
+    }
+
+    return { success: true, taskId: task.id }
+  } catch (error: any) {
+    console.error("Database error in createTaskAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 3. Toggle task completion
+export async function toggleTaskCompletionAction(taskId: string, completed: boolean) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status: completed ? "COMPLETED" : "NORMAL",
+        completedAt: completed ? new Date() : null,
+      },
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in toggleTaskCompletionAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 4. Delete a task
+export async function deleteTaskAction(taskId: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    await prisma.task.delete({
+      where: { id: taskId },
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in deleteTaskAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 5. Create a new custom list/project
+export async function createProjectAction(name: string, color: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const userId = session.user.id
+    const project = await prisma.project.create({
+      data: {
+        name,
+        color,
+        userId,
+        kind: "LIST",
+      },
+    })
+    return { success: true, projectId: project.id }
+  } catch (error: any) {
+    console.error("Database error in createProjectAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 6. Create a new habit
+export async function createHabitAction(name: string, color: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const userId = session.user.id
+    const habit = await prisma.habit.create({
+      data: {
+        name,
+        color,
+        userId,
+      },
+    })
+    return { success: true, habitId: habit.id }
+  } catch (error: any) {
+    console.error("Database error in createHabitAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 7. Toggle a habit log record
+export async function toggleHabitRecordAction(habitId: string, dateStr: string, completed: boolean) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const recordDate = new Date(dateStr)
+    
+    if (completed) {
+      await prisma.habitRecord.upsert({
+        where: {
+          habitId_date: {
+            habitId,
+            date: recordDate,
+          },
+        },
+        create: {
+          habitId,
+          date: recordDate,
+          value: 1,
+        },
+        update: {
+          value: 1,
+        },
+      })
+    } else {
+      await prisma.habitRecord.delete({
+        where: {
+          habitId_date: {
+            habitId,
+            date: recordDate,
+          },
+        },
+      })
+    }
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in toggleHabitRecordAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}

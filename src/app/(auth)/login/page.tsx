@@ -273,7 +273,7 @@ export default function LoginPage() {
 
       {/* Footer Link */}
       <div className="text-center text-sm text-muted-foreground">
-        New to TickTick?{" "}
+        New to ZOC?{" "}
         <Link
           href="/register"
           className="font-bold text-primary hover:underline hover:text-primary/90 transition-colors"

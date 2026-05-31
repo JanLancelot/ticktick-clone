@@ -38,7 +38,7 @@ export default function AuthLayout({
             </svg>
           </div>
           <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground">
-            TickTick<span className="text-primary font-black">.</span>
+            ZOC<span className="text-primary font-black">.</span>
           </span>
         </div>
 
@@ -55,7 +55,7 @@ export default function AuthLayout({
             </span>
           </h2>
           <p className="text-muted-foreground text-base leading-relaxed">
-            Organize tasks, build lasting habits, manage time blocks, and track your focus. TickTick is designed to keep you highly productive, wherever you are.
+            Organize tasks, build lasting habits, manage time blocks, and track your focus. ZOC is designed to keep you highly productive, wherever you are.
           </p>
 
           {/* Quick list of value points with beautiful minimalist UI */}
@@ -97,7 +97,7 @@ export default function AuthLayout({
 
         {/* Footer info */}
         <div className="text-xs text-muted-foreground flex justify-between">
-          <span>&copy; 2026 TickTick Clone. All rights reserved.</span>
+          <span>&copy; 2026 ZOC. All rights reserved.</span>
           <div className="flex gap-4">
             <Link href="#" className="hover:underline">Privacy</Link>
             <Link href="#" className="hover:underline">Terms</Link>
@@ -125,7 +125,7 @@ export default function AuthLayout({
               />
             </svg>
           </div>
-          <span className="text-base font-bold tracking-tight">TickTick</span>
+          <span className="text-base font-bold tracking-tight">ZOC</span>
         </div>
 
         <div className="w-full max-w-[420px] transition-all duration-300">

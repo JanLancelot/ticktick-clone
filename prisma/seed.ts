@@ -89,7 +89,7 @@ async function main() {
 
   const projectClone = await prisma.project.create({
     data: {
-      name: "🎯 NextJS TickTick Clone",
+      name: "🎯 ZOC Tasks",
       color: "#4F46E5",
       icon: "target",
       kind: ProjectKind.PROJECT,
@@ -243,7 +243,7 @@ async function main() {
     },
   });
 
-  // 7.2. Project: NextJS TickTick Clone Tasks
+  // 7.2. Project: ZOC Tasks
   const taskLandingPage = await prisma.task.create({
     data: {
       title: "Design landing page with modern dark mode & glassmorphism",
