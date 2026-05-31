@@ -17,6 +17,7 @@ export default function TasksPage() {
     selectedTaskId,
     setSelectedTaskId,
     updateTask,
+    showTrash,
   } = useDashboard()
 
   const selectedTask = tasksHook.tasks.find((t) => t.id === selectedTaskId)
@@ -25,15 +26,17 @@ export default function TasksPage() {
     <div className="flex flex-col lg:flex-row gap-6 items-start h-full w-full">
       {/* Left Column: Tasks Board */}
       <div className="flex-1 space-y-6 w-full">
-        <TaskAdder
-          projects={projectsHook.projects}
-          activeTab={activeTab}
-          defaultDueDate={newTaskDueDate}
-          onAddTask={(title, priority, dueDate, projectId, tag) => {
-            tasksHook.addTask(title, priority, dueDate, projectId, tag)
-            setNewTaskDueDate("")
-          }}
-        />
+        {!showTrash && (
+          <TaskAdder
+            projects={projectsHook.projects}
+            activeTab={activeTab}
+            defaultDueDate={newTaskDueDate}
+            onAddTask={(title, priority, dueDate, projectId, tag) => {
+              tasksHook.addTask(title, priority, dueDate, projectId, tag)
+              setNewTaskDueDate("")
+            }}
+          />
+        )}
 
         <TasksList
           activeTasks={activeFiltered}
@@ -45,6 +48,7 @@ export default function TasksPage() {
           selectedTaskId={pomodoroHook.selectedTaskId}
           activeSelectedTaskId={selectedTaskId}
           onRowClick={setSelectedTaskId}
+          isTrash={showTrash}
         />
       </div>
 

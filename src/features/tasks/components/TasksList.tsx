@@ -19,6 +19,7 @@ interface TasksListProps {
   selectedTaskId?: string | null
   activeSelectedTaskId?: string | null
   onRowClick?: (id: string) => void
+  isTrash?: boolean
 }
 
 export function TasksList({
@@ -31,6 +32,7 @@ export function TasksList({
   selectedTaskId,
   activeSelectedTaskId,
   onRowClick,
+  isTrash = false,
 }: TasksListProps) {
   const [completedExpanded, setCompletedExpanded] = useState(true)
 
@@ -39,15 +41,17 @@ export function TasksList({
       {/* Active Tasks list */}
       <div className="space-y-2">
         <h3 className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground px-1">
-          Active Tasks ({activeTasks.length})
+          {isTrash ? `Trash Tasks (${activeTasks.length})` : `Active Tasks (${activeTasks.length})`}
         </h3>
 
         {activeTasks.length === 0 ? (
           <div className="text-center py-12 bg-card border border-border border-dashed rounded-2xl select-none">
             <CheckCircle2 className="h-10 w-10 text-muted-foreground/35 mx-auto mb-3" />
-            <p className="text-sm font-bold text-muted-foreground">All caught up!</p>
+            <p className="text-sm font-bold text-muted-foreground">
+              {isTrash ? "Trash Bin is empty" : "All caught up!"}
+            </p>
             <p className="text-xs text-muted-foreground/60 mt-1">
-              Add a new task or sit back and relax.
+              {isTrash ? "Your deleted tasks will appear here." : "Add a new task or sit back and relax."}
             </p>
           </div>
         ) : (

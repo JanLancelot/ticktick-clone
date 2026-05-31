@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Task } from "../types"
-import { X, Calendar, Flag, Folder, CheckCircle2, Circle, FileText } from "lucide-react"
+import { X, Calendar, Flag, Folder, CheckCircle2, Circle, FileText, Type, MessageSquare, MoreHorizontal, Inbox } from "lucide-react"
 
 interface Project {
   id: string
@@ -114,7 +114,7 @@ export function TaskDetailsSidebar({
     <aside className="w-full md:w-[500px] bg-card border-l border-border h-full flex flex-col shadow-2xl relative overflow-hidden">
       {/* Top Header Actions */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-neutral-50/50 select-none shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* Animated Toggle Completion checkbox */}
           <button
             onClick={() => onToggleComplete(task.id)}
@@ -128,9 +128,12 @@ export function TaskDetailsSidebar({
             )}
           </button>
 
+          {/* Subtle vertical separator */}
+          <div className="w-px h-4 bg-border/80" />
+
           {/* Quick Date Display */}
-          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground bg-muted/40 px-2 py-1 rounded-lg border border-border/60 relative group cursor-pointer hover:bg-muted/70 transition-all">
-            <Calendar className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground relative group cursor-pointer hover:text-foreground transition-all">
+            <Calendar className="h-4 w-4 text-muted-foreground/80" />
             <span>{getRelativeDateString(dueDate || null)}</span>
             <input
               type="date"
@@ -142,13 +145,14 @@ export function TaskDetailsSidebar({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Priority dropdown indicator */}
-          <div className="relative group cursor-pointer flex items-center gap-1 bg-muted/40 border border-border/60 rounded-lg px-2 py-1 text-xs font-bold text-muted-foreground hover:bg-muted/70 transition-all">
-            <Flag className={`h-3.5 w-3.5 ${getPriorityColor(priority)}`} />
+          {/* Priority dropdown indicator - just a flag outline/filled, overlaid opacity-0 select */}
+          <div className="relative group cursor-pointer p-1.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-center">
+            <Flag className={`h-4.5 w-4.5 ${getPriorityColor(priority)} ${priority !== "NONE" ? "fill-current" : ""}`} />
             <select
               value={priority}
               onChange={handlePriorityChange}
-              className="bg-transparent border-0 text-xs font-bold focus:outline-none focus-visible:ring-0 cursor-pointer pr-1"
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              title="Change Priority"
             >
               <option value="NONE">No Priority</option>
               <option value="LOW">Low Priority</option>
@@ -157,29 +161,12 @@ export function TaskDetailsSidebar({
             </select>
           </div>
 
-          {/* Project folder dropdown */}
-          <div className="relative group cursor-pointer flex items-center gap-1 bg-muted/40 border border-border/60 rounded-lg px-2 py-1 text-xs font-bold text-muted-foreground hover:bg-muted/70 transition-all">
-            <Folder className="h-3.5 w-3.5 text-sky-500" />
-            <select
-              value={projectId}
-              onChange={handleProjectChange}
-              className="bg-transparent border-0 text-xs font-bold focus:outline-none focus-visible:ring-0 cursor-pointer max-w-[80px] truncate"
-            >
-              <option value="inbox">Inbox</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors"
             title="Close Panel"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4.5 w-4.5" />
           </button>
         </div>
       </div>
@@ -216,6 +203,59 @@ export function TaskDetailsSidebar({
             placeholder="Add detailed markdown notes, checklists, or comments..."
             className="w-full flex-1 bg-muted/15 border border-border/40 p-4 rounded-2xl resize-none text-xs font-medium leading-relaxed placeholder:text-muted-foreground/60 focus:outline-none focus:bg-background focus:border-primary/40 focus:ring-0 focus-visible:ring-0 transition-all select-text"
           />
+        </div>
+      </div>
+
+      {/* Bottom Footer Actions */}
+      <div className="border-t border-border px-5 py-3 bg-neutral-50/50 flex items-center justify-between shrink-0 select-none">
+        {/* Project Selector (Bottom Left) */}
+        <div className="relative group flex items-center gap-1.5 hover:bg-muted/80 px-2.5 py-1.5 rounded-xl cursor-pointer transition-all border border-border/40 bg-background/50">
+          {projectId === "inbox" ? (
+            <Inbox className="h-4 w-4 text-primary shrink-0" />
+          ) : (
+            <span
+              className="h-2.5 w-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: projects.find((p) => p.id === projectId)?.color || "#ccc" }}
+            />
+          )}
+          <span className="truncate max-w-[120px] font-semibold text-foreground text-xs">
+            {projectId === "inbox" ? "Inbox" : projects.find((p) => p.id === projectId)?.name || "Inbox"}
+          </span>
+          <select
+            value={projectId || "inbox"}
+            onChange={handleProjectChange}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            title="Move to List"
+          >
+            <option value="inbox">Inbox</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Action icons (Bottom Right) */}
+        <div className="flex items-center gap-1.5">
+          <button
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 cursor-pointer transition-colors"
+            title="Formatting Help"
+          >
+            <Type className="h-4.5 w-4.5" />
+          </button>
+          <button
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 cursor-pointer transition-colors"
+            title="Task Comments"
+          >
+            <MessageSquare className="h-4.5 w-4.5" />
+          </button>
+          <button
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 cursor-pointer transition-colors"
+            title="More Options"
+          >
+            <MoreHorizontal className="h-4.5 w-4.5" />
+          </button>
         </div>
       </div>
     </aside>
