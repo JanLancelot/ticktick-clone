@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Task } from "../types"
 import { X, Calendar, Flag, Folder, CheckCircle2, Circle, FileText, Type, MessageSquare, MoreHorizontal, Inbox } from "lucide-react"
 
@@ -39,6 +39,7 @@ export function TaskDetailsSidebar({
   const [projectId, setProjectId] = useState(task.projectId)
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false)
   const [showProjectDropdown, setShowProjectDropdown] = useState(false)
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   // Keep local state in sync when task selection changes
   useEffect(() => {
@@ -134,15 +135,34 @@ export function TaskDetailsSidebar({
           <div className="w-px h-4 bg-border/80" />
 
           {/* Quick Date Display */}
-          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground relative group cursor-pointer hover:text-foreground transition-all">
-            <Calendar className="h-4 w-4 text-muted-foreground/80" />
-            <span>{getRelativeDateString(dueDate || null)}</span>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={handleDueDateChange}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-            />
+          <div className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
+            <button
+              onClick={() => dateInputRef.current?.showPicker()}
+              className="flex items-center gap-1.5 cursor-pointer hover:text-foreground hover:bg-muted/50 px-2 py-1.5 rounded-lg border border-border/40 bg-background/50 transition-all text-xs font-bold"
+              title="Change Due Date"
+            >
+              <Calendar className="h-4 w-4 text-muted-foreground/80 shrink-0" />
+              <span>{getRelativeDateString(dueDate || null)}</span>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={dueDate}
+                onChange={handleDueDateChange}
+                className="absolute inset-0 opacity-0 pointer-events-none w-0 h-0"
+              />
+            </button>
+            {dueDate && (
+              <button
+                onClick={() => {
+                  setDueDate("")
+                  onUpdate(task.id, { dueDate: null })
+                }}
+                className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors"
+                title="Clear Due Date"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
           </div>
         </div>
 
