@@ -37,6 +37,8 @@ export function TaskDetailsSidebar({
   const [dueDate, setDueDate] = useState(task.dueDate || "")
   const [priority, setPriority] = useState(task.priority)
   const [projectId, setProjectId] = useState(task.projectId)
+  const [showPriorityDropdown, setShowPriorityDropdown] = useState(false)
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false)
 
   // Keep local state in sync when task selection changes
   useEffect(() => {
@@ -145,20 +147,53 @@ export function TaskDetailsSidebar({
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Priority dropdown indicator - just a flag outline/filled, overlaid opacity-0 select */}
-          <div className="relative group cursor-pointer p-1.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-center">
-            <Flag className={`h-4.5 w-4.5 ${getPriorityColor(priority)} ${priority !== "NONE" ? "fill-current" : ""}`} />
-            <select
-              value={priority}
-              onChange={handlePriorityChange}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+          {/* Priority dropdown indicator - just a flag outline/filled, custom popover menu dropdown */}
+          <div className="relative flex items-center justify-center">
+            <button
+              onClick={() => setShowPriorityDropdown(!showPriorityDropdown)}
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-center cursor-pointer"
               title="Change Priority"
             >
-              <option value="NONE">No Priority</option>
-              <option value="LOW">Low Priority</option>
-              <option value="MEDIUM">Med Priority</option>
-              <option value="HIGH">High Priority</option>
-            </select>
+              <Flag className={`h-4.5 w-4.5 ${getPriorityColor(priority)} ${priority !== "NONE" ? "fill-current" : ""}`} />
+            </button>
+
+            {showPriorityDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowPriorityDropdown(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 w-44 bg-card border border-border rounded-xl shadow-lg z-50 p-1.5 flex flex-col gap-0.5 animate-fade-in select-none">
+                  {[
+                    { value: "HIGH", label: "High", colorClass: "text-red-500 fill-current" },
+                    { value: "MEDIUM", label: "Medium", colorClass: "text-amber-500 fill-current" },
+                    { value: "LOW", label: "Low", colorClass: "text-blue-500 fill-current" },
+                    { value: "NONE", label: "None", colorClass: "text-gray-400" },
+                  ].map((opt) => {
+                    const isSelected = priority === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          setPriority(opt.value as any)
+                          onUpdate(task.id, { priority: opt.value as any })
+                          setShowPriorityDropdown(false)
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all hover:bg-muted/70 ${
+                          isSelected ? "bg-primary/5 text-primary" : "text-foreground/80"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Flag className={`h-4 w-4 shrink-0 ${opt.colorClass}`} />
+                          <span>{opt.label}</span>
+                        </div>
+                        {isSelected && <span className="text-primary font-black">✓</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           <button
@@ -208,32 +243,80 @@ export function TaskDetailsSidebar({
 
       {/* Bottom Footer Actions */}
       <div className="border-t border-border px-5 py-3 bg-neutral-50/50 flex items-center justify-between shrink-0 select-none">
-        {/* Project Selector (Bottom Left) */}
-        <div className="relative group flex items-center gap-1.5 hover:bg-muted/80 px-2.5 py-1.5 rounded-xl cursor-pointer transition-all border border-border/40 bg-background/50">
-          {projectId === "inbox" ? (
-            <Inbox className="h-4 w-4 text-primary shrink-0" />
-          ) : (
-            <span
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: projects.find((p) => p.id === projectId)?.color || "#ccc" }}
-            />
-          )}
-          <span className="truncate max-w-[120px] font-semibold text-foreground text-xs">
-            {projectId === "inbox" ? "Inbox" : projects.find((p) => p.id === projectId)?.name || "Inbox"}
-          </span>
-          <select
-            value={projectId || "inbox"}
-            onChange={handleProjectChange}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+        {/* Project Selector (Bottom Left) - custom popover dropdown */}
+        <div className="relative flex items-center">
+          <button
+            onClick={() => setShowProjectDropdown(!showProjectDropdown)}
+            className="flex items-center gap-1.5 hover:bg-muted/80 px-2.5 py-1.5 rounded-xl cursor-pointer transition-all border border-border/40 bg-background/50 text-xs font-semibold text-foreground"
             title="Move to List"
           >
-            <option value="inbox">Inbox</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            {projectId === "inbox" ? (
+              <Inbox className="h-4 w-4 text-primary shrink-0" />
+            ) : (
+              <span
+                className="h-2.5 w-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: projects.find((p) => p.id === projectId)?.color || "#ccc" }}
+              />
+            )}
+            <span className="truncate max-w-[120px]">
+              {projectId === "inbox" ? "Inbox" : projects.find((p) => p.id === projectId)?.name || "Inbox"}
+            </span>
+          </button>
+
+          {showProjectDropdown && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowProjectDropdown(false)}
+              />
+              <div className="absolute left-0 bottom-full mb-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 p-1.5 flex flex-col gap-0.5 max-h-60 overflow-y-auto animate-fade-in select-none">
+                {/* Inbox Option */}
+                <button
+                  onClick={() => {
+                    setProjectId("inbox")
+                    onUpdate(task.id, { projectId: "inbox" })
+                    setShowProjectDropdown(false)
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all hover:bg-muted/70 ${
+                    projectId === "inbox" ? "bg-primary/5 text-primary" : "text-foreground/80"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Inbox className="h-4 w-4 text-primary shrink-0" />
+                    <span>Inbox</span>
+                  </div>
+                  {projectId === "inbox" && <span className="text-primary font-black">✓</span>}
+                </button>
+
+                {/* Projects Options */}
+                {projects.map((proj) => {
+                  const isSelected = projectId === proj.id
+                  return (
+                    <button
+                      key={proj.id}
+                      onClick={() => {
+                        setProjectId(proj.id)
+                        onUpdate(task.id, { projectId: proj.id })
+                        setShowProjectDropdown(false)
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-all hover:bg-muted/70 ${
+                        isSelected ? "bg-primary/5 text-primary" : "text-foreground/80"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 truncate">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: proj.color }}
+                        />
+                        <span className="truncate">{proj.name}</span>
+                      </div>
+                      {isSelected && <span className="text-primary font-black">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Action icons (Bottom Right) */}
