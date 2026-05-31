@@ -7,6 +7,9 @@ import { useHabitsState } from "@/src/features/habits"
 import { usePomodoroState } from "@/src/features/focus"
 import { getDashboardData, updateTaskAction } from "@/src/app/actions"
 
+export type SortOption = "none" | "priority" | "tag" | "date" | "title"
+export type GroupOption = "none" | "list" | "date" | "tag" | "priority"
+
 interface UserSession {
   name: string
   email: string
@@ -39,6 +42,11 @@ interface DashboardContextType {
   setCalendarDate: React.Dispatch<React.SetStateAction<Date>>
   newTaskDueDate: string
   setNewTaskDueDate: React.Dispatch<React.SetStateAction<string>>
+  sortBy: SortOption
+  setSortBy: (val: SortOption) => void
+  groupBy: GroupOption
+  setGroupBy: (val: GroupOption) => void
+  isLoading: boolean
 
   // Selected Task Detail Edit State
   selectedTaskId: string | null
@@ -83,6 +91,28 @@ export function DashboardProvider({
 
   // Task selection details editor state
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const [sortBy, setSortByState] = useState<SortOption>("none")
+  const [groupBy, setGroupByState] = useState<GroupOption>("none")
+
+  // Sync sort/group preferences from localStorage on mount
+  useEffect(() => {
+    const savedSort = localStorage.getItem("zoc_sort_by") as SortOption
+    if (savedSort) setSortByState(savedSort)
+    const savedGroup = localStorage.getItem("zoc_group_by") as GroupOption
+    if (savedGroup) setGroupByState(savedGroup)
+  }, [])
+
+  const setSortBy = (val: SortOption) => {
+    setSortByState(val)
+    localStorage.setItem("zoc_sort_by", val)
+  }
+
+  const setGroupBy = (val: GroupOption) => {
+    setGroupByState(val)
+    localStorage.setItem("zoc_group_by", val)
+  }
 
   // Clean sub-feature hooks for state management
   const projectsHook = useProjectsState()
@@ -96,23 +126,30 @@ export function DashboardProvider({
     document.documentElement.classList.remove("dark")
     localStorage.setItem("theme", "light")
 
+    // 1. Immediately render cached data from localStorage (Zero Flicker Initial Load)
+    const savedTasks = localStorage.getItem("zoc_tasks")
+    if (savedTasks) tasksHook.setTasks(JSON.parse(savedTasks))
+
+    const savedProjects = localStorage.getItem("zoc_projects")
+    if (savedProjects) projectsHook.setProjects(JSON.parse(savedProjects))
+
+    const savedHabits = localStorage.getItem("zoc_habits")
+    if (savedHabits) habitsHook.setHabits(JSON.parse(savedHabits))
+
+    // 2. Fetch fresh updates from server in the background and update cache
     async function loadData() {
       const res = await getDashboardData()
       if (res.success && res.data) {
         tasksHook.setTasks(res.data.tasks)
         projectsHook.setProjects(res.data.projects)
         habitsHook.setHabits(res.data.habits)
-      } else {
-        console.warn("Prisma DB is offline or unavailable. Falling back to client-side offline localStorage.")
-        const savedTasks = localStorage.getItem("zoc_tasks")
-        if (savedTasks) tasksHook.setTasks(JSON.parse(savedTasks))
-
-        const savedProjects = localStorage.getItem("zoc_projects")
-        if (savedProjects) projectsHook.setProjects(JSON.parse(savedProjects))
-
-        const savedHabits = localStorage.getItem("zoc_habits")
-        if (savedHabits) habitsHook.setHabits(JSON.parse(savedHabits))
+        
+        // Cache the latest PostgreSQL data
+        localStorage.setItem("zoc_tasks", JSON.stringify(res.data.tasks))
+        localStorage.setItem("zoc_projects", JSON.stringify(res.data.projects))
+        localStorage.setItem("zoc_habits", JSON.stringify(res.data.habits))
       }
+      setIsLoading(false)
     }
 
     loadData()
@@ -231,6 +268,11 @@ export function DashboardProvider({
         setCalendarDate,
         newTaskDueDate,
         setNewTaskDueDate,
+        sortBy,
+        setSortBy,
+        groupBy,
+        setGroupBy,
+        isLoading,
         selectedTaskId,
         setSelectedTaskId,
         updateTask,

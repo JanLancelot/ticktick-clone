@@ -112,6 +112,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
   return (
     <div className="relative flex items-center gap-1 text-xs font-bold text-muted-foreground">
       <button
+        type="button"
         onClick={handleOpen}
         className="flex items-center gap-1.5 cursor-pointer hover:text-foreground hover:bg-muted/50 px-2 py-1.5 rounded-lg border border-border/40 bg-background/50 transition-all text-xs font-bold"
         title="Change Due Date"
@@ -122,6 +123,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
 
       {value && (
         <button
+          type="button"
           onClick={() => onChange(null)}
           className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors"
           title="Clear Due Date"
@@ -139,10 +141,14 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
           <div className="absolute left-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-xl z-50 p-4 animate-fade-in flex flex-col">
             {/* Date / Duration Tabs */}
             <div className="bg-muted/50 p-1 rounded-xl flex gap-1 select-none mb-4 text-[11px] font-extrabold text-muted-foreground">
-              <button className="flex-1 py-1.5 rounded-lg bg-card text-foreground shadow-xs cursor-pointer text-center font-black">
+              <button
+                type="button"
+                className="flex-1 py-1.5 rounded-lg bg-card text-foreground shadow-xs cursor-pointer text-center font-black"
+              >
                 Date
               </button>
               <button
+                type="button"
                 onClick={() => alert("Duration planning is a premium feature.")}
                 className="flex-1 py-1.5 rounded-lg hover:bg-muted cursor-pointer text-center text-muted-foreground/75 font-black transition-colors"
               >
@@ -153,6 +159,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
             {/* Quick Presets */}
             <div className="flex items-center justify-around border-b border-border/40 pb-3 mb-4 select-none">
               <button
+                type="button"
                 onClick={() => applyPreset("today")}
                 className="p-2 text-muted-foreground hover:bg-primary/5 rounded-xl cursor-pointer transition-all flex flex-col items-center gap-1 group"
                 title="Today"
@@ -160,6 +167,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
                 <Sun className="h-5 w-5 text-amber-500 fill-amber-500/20 group-hover:scale-110 transition-transform" />
               </button>
               <button
+                type="button"
                 onClick={() => applyPreset("tomorrow")}
                 className="p-2 text-muted-foreground hover:bg-primary/5 rounded-xl cursor-pointer transition-all flex flex-col items-center gap-1 group"
                 title="Tomorrow"
@@ -167,6 +175,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
                 <Sunrise className="h-5 w-5 text-orange-500 group-hover:scale-110 transition-transform" />
               </button>
               <button
+                type="button"
                 onClick={() => applyPreset("nextWeek")}
                 className="p-2 text-muted-foreground hover:bg-primary/5 rounded-xl cursor-pointer transition-all flex flex-col items-center gap-1 group"
                 title="Next Week"
@@ -174,6 +183,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
                 <CalendarDays className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
               </button>
               <button
+                type="button"
                 onClick={() => applyPreset("nextMonth")}
                 className="p-2 text-muted-foreground hover:bg-primary/5 rounded-xl cursor-pointer transition-all flex flex-col items-center gap-1 group"
                 title="Next Month / Someday"
@@ -189,12 +199,14 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
               </span>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => navigateMonth("prev")}
                   className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-md cursor-pointer transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigateMonth("today")}
                   className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-md cursor-pointer transition-colors"
                   title="Reset to Today"
@@ -202,6 +214,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
                   <Circle className="h-2 w-2 fill-muted-foreground/30 text-muted-foreground" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => navigateMonth("next")}
                   className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-md cursor-pointer transition-colors"
                 >
@@ -225,6 +238,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
                 const isToday = new Date().toISOString().split("T")[0] === dateStr
                 return (
                   <button
+                    type="button"
                     key={cell.key}
                     onClick={() => setTempSelectedDate(dateStr)}
                     className="flex items-center justify-center p-0.5 cursor-pointer relative"
@@ -255,6 +269,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
                 { label: "Repeat", icon: Repeat, color: "text-indigo-500" },
               ].map((item) => (
                 <button
+                  type="button"
                   key={item.label}
                   onClick={() => alert(`${item.label} setting is a premium feature.`)}
                   className="w-full flex items-center justify-between py-2 px-2 hover:bg-muted/60 rounded-xl cursor-pointer text-xs font-bold text-muted-foreground/90 transition-colors animate-fade-in"
@@ -271,6 +286,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
             {/* Dropdown footer action buttons */}
             <div className="flex gap-3 mt-1 select-none border-t border-border/40 pt-4">
               <button
+                type="button"
                 onClick={() => {
                   onChange(tempSelectedDate || null)
                   setOpen(false)
@@ -280,6 +296,7 @@ export function CalendarDropdown({ value, onChange }: CalendarDropdownProps) {
                 OK
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setTempSelectedDate(null)
                   onChange(null)

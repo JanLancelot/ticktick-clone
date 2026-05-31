@@ -21,6 +21,7 @@ export function ListDropdown({ value, projects, onChange, direction = "up" }: Li
   return (
     <div className="relative flex items-center">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 hover:bg-muted/80 px-2.5 py-1.5 rounded-xl cursor-pointer transition-all border border-border/40 bg-background/50 text-xs font-semibold text-foreground"
         title="Move to List"
@@ -47,6 +48,7 @@ export function ListDropdown({ value, projects, onChange, direction = "up" }: Li
           <div className={`absolute left-0 w-48 bg-card border border-border rounded-xl shadow-lg z-50 p-1.5 flex flex-col gap-0.5 max-h-60 overflow-y-auto animate-fade-in select-none ${direction === "up" ? "bottom-full mb-2" : "top-full mt-2"}`}>
             {/* Inbox Option */}
             <button
+              type="button"
               onClick={() => {
                 onChange("inbox")
                 setOpen(false)
@@ -67,6 +69,7 @@ export function ListDropdown({ value, projects, onChange, direction = "up" }: Li
               const isSelected = value === proj.id
               return (
                 <button
+                  type="button"
                   key={proj.id}
                   onClick={() => {
                     onChange(proj.id)

@@ -34,6 +34,7 @@ export function PriorityDropdown({ value, onChange }: PriorityDropdownProps) {
   return (
     <div className="relative flex items-center justify-center">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         className="p-1.5 rounded-lg hover:bg-muted transition-colors flex items-center justify-center cursor-pointer"
         title="Change Priority"
@@ -52,6 +53,7 @@ export function PriorityDropdown({ value, onChange }: PriorityDropdownProps) {
               const isSelected = value === opt.value
               return (
                 <button
+                  type="button"
                   key={opt.value}
                   onClick={() => {
                     onChange(opt.value)
