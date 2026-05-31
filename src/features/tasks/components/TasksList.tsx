@@ -15,7 +15,9 @@ import {
   FolderOpen,
   SlidersHorizontal,
   Ban,
-  Check
+  Check,
+  List,
+  Columns3
 } from "lucide-react"
 
 interface Project {
@@ -56,7 +58,7 @@ export function TasksList({
   onRowClick,
   isTrash = false,
 }: TasksListProps) {
-  const { sortBy, setSortBy, groupBy, setGroupBy, isLoading, tasksHook } = useDashboard()
+  const { sortBy, setSortBy, groupBy, setGroupBy, viewMode, setViewMode, isLoading, tasksHook } = useDashboard()
   const [completedExpanded, setCompletedExpanded] = useState(true)
   const [groupOpen, setGroupOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
@@ -505,7 +507,33 @@ export function TasksList({
           </span>
         </div>
         
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Segmented View Switcher */}
+          <div className="flex items-center bg-card border border-border rounded-xl p-0.5 shadow-3xs">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              <span>List</span>
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all cursor-pointer ${
+                viewMode === "kanban"
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Columns3 className="h-3.5 w-3.5" />
+              <span>Kanban</span>
+            </button>
+          </div>
+
           {/* Group By selector dropdown */}
           <div className="relative">
             <button

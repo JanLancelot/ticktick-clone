@@ -2,7 +2,7 @@
 
 import React from "react"
 import { useDashboard } from "@/src/components/dashboard/DashboardContext"
-import { TaskAdder, TasksList, TaskDetailsSidebar } from "@/src/features/tasks"
+import { TaskAdder, TasksList, KanbanView, TaskDetailsSidebar } from "@/src/features/tasks"
 
 export default function TasksPage() {
   const {
@@ -18,6 +18,7 @@ export default function TasksPage() {
     setSelectedTaskId,
     updateTask,
     showTrash,
+    viewMode,
   } = useDashboard()
 
   const selectedTask = tasksHook.tasks.find((t) => t.id === selectedTaskId)
@@ -26,7 +27,7 @@ export default function TasksPage() {
     <div className="flex flex-col lg:flex-row gap-6 items-start h-full w-full">
       {/* Left Column: Tasks Board */}
       <div className="flex-1 space-y-6 w-full">
-        {!showTrash && (
+        {!showTrash && viewMode === "list" && (
           <TaskAdder
             projects={projectsHook.projects}
             activeTab={activeTab}
@@ -39,18 +40,33 @@ export default function TasksPage() {
           />
         )}
 
-        <TasksList
-          activeTasks={activeFiltered}
-          completedTasks={completedFiltered}
-          projects={projectsHook.projects}
-          onToggle={tasksHook.toggleTaskCompletion}
-          onDelete={tasksHook.deleteTask}
-          onSelectFocus={pomodoroHook.setSelectedTaskId}
-          selectedTaskId={pomodoroHook.selectedTaskId}
-          activeSelectedTaskId={selectedTaskId}
-          onRowClick={setSelectedTaskId}
-          isTrash={showTrash}
-        />
+        {viewMode === "list" ? (
+          <TasksList
+            activeTasks={activeFiltered}
+            completedTasks={completedFiltered}
+            projects={projectsHook.projects}
+            onToggle={tasksHook.toggleTaskCompletion}
+            onDelete={tasksHook.deleteTask}
+            onSelectFocus={pomodoroHook.setSelectedTaskId}
+            selectedTaskId={pomodoroHook.selectedTaskId}
+            activeSelectedTaskId={selectedTaskId}
+            onRowClick={setSelectedTaskId}
+            isTrash={showTrash}
+          />
+        ) : (
+          <KanbanView
+            activeTasks={activeFiltered}
+            completedTasks={completedFiltered}
+            projects={projectsHook.projects}
+            onToggle={tasksHook.toggleTaskCompletion}
+            onDelete={tasksHook.deleteTask}
+            onSelectFocus={pomodoroHook.setSelectedTaskId}
+            selectedTaskId={pomodoroHook.selectedTaskId}
+            activeSelectedTaskId={selectedTaskId}
+            onRowClick={setSelectedTaskId}
+            isTrash={showTrash}
+          />
+        )}
       </div>
 
       {/* Permanent vertical line marking the edit panel workspace boundary */}

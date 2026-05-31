@@ -9,6 +9,7 @@ import { getDashboardData, updateTaskAction } from "@/src/app/actions"
 
 export type SortOption = "none" | "priority" | "tag" | "date" | "title"
 export type GroupOption = "none" | "list" | "date" | "tag" | "priority"
+export type ViewMode = "list" | "kanban"
 
 interface UserSession {
   name: string
@@ -46,6 +47,8 @@ interface DashboardContextType {
   setSortBy: (val: SortOption) => void
   groupBy: GroupOption
   setGroupBy: (val: GroupOption) => void
+  viewMode: ViewMode
+  setViewMode: (val: ViewMode) => void
   isLoading: boolean
 
   // Selected Task Detail Edit State
@@ -95,13 +98,16 @@ export function DashboardProvider({
 
   const [sortBy, setSortByState] = useState<SortOption>("none")
   const [groupBy, setGroupByState] = useState<GroupOption>("none")
+  const [viewMode, setViewModeState] = useState<ViewMode>("list")
 
-  // Sync sort/group preferences from localStorage on mount
+  // Sync sort/group/view preferences from localStorage on mount
   useEffect(() => {
     const savedSort = localStorage.getItem("zoc_sort_by") as SortOption
     if (savedSort) setSortByState(savedSort)
     const savedGroup = localStorage.getItem("zoc_group_by") as GroupOption
     if (savedGroup) setGroupByState(savedGroup)
+    const savedViewMode = localStorage.getItem("zoc_view_mode") as ViewMode
+    if (savedViewMode) setViewModeState(savedViewMode)
   }, [])
 
   const setSortBy = (val: SortOption) => {
@@ -112,6 +118,11 @@ export function DashboardProvider({
   const setGroupBy = (val: GroupOption) => {
     setGroupByState(val)
     localStorage.setItem("zoc_group_by", val)
+  }
+
+  const setViewMode = (val: ViewMode) => {
+    setViewModeState(val)
+    localStorage.setItem("zoc_view_mode", val)
   }
 
   // Clean sub-feature hooks for state management
@@ -294,6 +305,8 @@ export function DashboardProvider({
         setSortBy,
         groupBy,
         setGroupBy,
+        viewMode,
+        setViewMode,
         isLoading,
         selectedTaskId,
         setSelectedTaskId,
