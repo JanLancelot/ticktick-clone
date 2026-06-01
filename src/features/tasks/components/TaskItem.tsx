@@ -1,6 +1,8 @@
 import React from "react"
 import { Task } from "../types"
-import { Circle, CheckCircle2, Timer, Trash2, GripVertical } from "lucide-react"
+import { Timer, Trash2, GripVertical } from "lucide-react"
+import { AnimatedCheckbox } from "@/components/ui/AnimatedCheckbox"
+import { useCelebration } from "@/components/ui/CelebrationContext"
 
 interface Project {
   id: string
@@ -32,7 +34,9 @@ export function TaskItem({
   onRowClick,
   isDraggable = false,
 }: TaskItemProps) {
+  const { triggerCelebration } = useCelebration()
   const getTodayDateString = () => new Date().toISOString().split("T")[0]
+
 
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
@@ -60,15 +64,14 @@ export function TaskItem({
         }`}
       >
         <div className="flex items-center gap-3.5 min-w-0">
-          <button
+          <AnimatedCheckbox
+            completed={true}
             onClick={(e) => {
               e.stopPropagation()
               onToggle(task.id)
             }}
-            className="focus:outline-none cursor-pointer text-green-500 shrink-0"
-          >
-            <CheckCircle2 className="h-5 w-5 fill-green-500 text-card hover:scale-[0.98] transition-transform" />
-          </button>
+            priority={task.priority}
+          />
           <p className="text-xs font-semibold text-muted-foreground line-through truncate max-w-[300px] md:max-w-[450px]">
             {task.title}
           </p>
@@ -104,15 +107,15 @@ export function TaskItem({
             <GripVertical className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors" />
           </div>
         )}
-        <button
+        <AnimatedCheckbox
+          completed={false}
           onClick={(e) => {
             e.stopPropagation()
+            triggerCelebration(e.clientX, e.clientY)
             onToggle(task.id)
           }}
-          className="focus:outline-none cursor-pointer text-muted-foreground/60 hover:text-primary transition-colors shrink-0"
-        >
-          <Circle className="h-5 w-5 hover:scale-105 transition-transform" />
-        </button>
+          priority={task.priority}
+        />
 
         <div className="min-w-0">
           <p className="text-xs font-bold text-foreground truncate max-w-[300px] md:max-w-[450px]">

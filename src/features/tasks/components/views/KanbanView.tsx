@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react"
 import { Task } from "../../types"
 import { TaskItem } from "../TaskItem"
 import { useDashboard, SortOption, GroupOption, ViewMode } from "@/src/components/dashboard/DashboardContext"
+import { useCelebration } from "@/components/ui/CelebrationContext"
 import {
   Plus,
   X,
@@ -75,6 +76,7 @@ export function KanbanView({
     updateTask,
     activeTab
   } = useDashboard()
+  const { triggerCelebration } = useCelebration()
 
   const [groupOpen, setGroupOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
@@ -141,9 +143,13 @@ export function KanbanView({
   // Sync local tasks with filtered tasks from context when NOT dragging
   useEffect(() => {
     if (!isDragging) {
-      setLocalTasks(allTasks)
+      const allKeys = allTasks.map(t => `${t.id}-${t.completed}-${t.priority}-${t.dueDate}-${t.projectId}-${t.sortOrder}`).join(",")
+      const localKeys = localTasks.map(t => `${t.id}-${t.completed}-${t.priority}-${t.dueDate}-${t.projectId}-${t.sortOrder}`).join(",")
+      if (allKeys !== localKeys) {
+        setLocalTasks(allTasks)
+      }
     }
-  }, [allTasks, isDragging])
+  }, [allTasks, isDragging, localTasks])
 
   // 2. Compute relative date utilities
   const getDates = () => {
@@ -401,6 +407,9 @@ export function KanbanView({
     if (groupBy === "none") {
       const shouldBeCompleted = targetColumnId === "completed"
       if (targetTask.completed !== shouldBeCompleted) {
+        if (shouldBeCompleted) {
+          triggerCelebration(e.clientX, e.clientY)
+        }
         onToggle(draggedTaskId)
       }
       return

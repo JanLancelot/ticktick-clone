@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { Task } from "../types"
-import { X, CheckCircle2, Circle, FileText, Type, MessageSquare, MoreHorizontal } from "lucide-react"
+import { X, FileText, Type, MessageSquare, MoreHorizontal } from "lucide-react"
+import { AnimatedCheckbox } from "@/components/ui/AnimatedCheckbox"
+import { useCelebration } from "@/components/ui/CelebrationContext"
 import { PriorityDropdown, type Priority } from "@/components/ui/PriorityDropdown"
 import { ListDropdown, type ListProject } from "@/components/ui/ListDropdown"
 import { CalendarDropdown } from "@/components/ui/CalendarDropdown"
@@ -36,6 +38,7 @@ export function TaskDetailsSidebar({
   onToggleComplete,
   onClose,
 }: TaskDetailsSidebarProps) {
+  const { triggerCelebration } = useCelebration()
   const [title, setTitle] = useState(task.title)
   const [content, setContent] = useState(task.content || "")
   const [dueDate, setDueDate] = useState(task.dueDate || "")
@@ -84,17 +87,16 @@ export function TaskDetailsSidebar({
       <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-neutral-50/50 select-none shrink-0">
         <div className="flex items-center gap-3">
           {/* Animated Toggle Completion checkbox */}
-          <button
-            onClick={() => onToggleComplete(task.id)}
-            className="focus:outline-none cursor-pointer"
-            title={task.completed ? "Mark Uncompleted" : "Mark Completed"}
-          >
-            {task.completed ? (
-              <CheckCircle2 className="h-5 w-5 fill-green-500 text-card hover:scale-[0.98] transition-transform" />
-            ) : (
-              <Circle className="h-5 w-5 text-muted-foreground/60 hover:text-primary hover:scale-105 transition-all" />
-            )}
-          </button>
+          <AnimatedCheckbox
+            completed={task.completed}
+            onClick={(e) => {
+              if (!task.completed) {
+                triggerCelebration(e.clientX, e.clientY)
+              }
+              onToggleComplete(task.id)
+            }}
+            priority={task.priority}
+          />
 
           {/* Subtle vertical separator */}
           <div className="w-px h-4 bg-border/80" />

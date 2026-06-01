@@ -250,9 +250,13 @@ export function TasksList({
   // Keep local tasks in sync with current visual tasks when not dragging
   useEffect(() => {
     if (!isDragging) {
-      setLocalTasks(currentVisualTasks)
+      const currentKeys = currentVisualTasks.map(t => `${t.id}-${t.completed}-${t.priority}-${t.dueDate}-${t.projectId}-${t.sortOrder}`).join(",")
+      const localKeys = localTasks.map(t => `${t.id}-${t.completed}-${t.priority}-${t.dueDate}-${t.projectId}-${t.sortOrder}`).join(",")
+      if (currentKeys !== localKeys) {
+        setLocalTasks(currentVisualTasks)
+      }
     }
-  }, [currentVisualTasks, isDragging])
+  }, [currentVisualTasks, isDragging, localTasks])
 
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
     const target = e.target as HTMLElement

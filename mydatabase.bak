@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QWj0ZnPwueUmo75ABJfpvYIaKDg92GzS1UkDIMEVcQFUECqstLsTQqJaZz9kd8z
+\restrict EvnQFowkinzigCIT5s8w8ecFjRVBqdjRbc84aJxTCnlbG5WUIM9sbSdccvppFth
 
 -- Dumped from database version 17.2
 -- Dumped by pg_dump version 18.4 (Ubuntu 18.4-0ubuntu0.26.04.1)
@@ -488,6 +488,7 @@ COPY public."Habit" (id, name, icon, color, status, frequency, "repeatDays", goa
 cmptcpy5d000yqiiaw3pwwojr	Drink 8 glasses of water	droplet	#3B82F6	ACTIVE	DAILY	\N	8	glasses	08:00	2026-05-31	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:53.665	2026-05-31 05:40:53.665
 cmptcpybp0012qiia4l0i8rvb	Read 15 pages of a book	book-open	#8B5CF6	ACTIVE	DAILY	\N	15	pages	21:00	2026-05-31	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:53.893	2026-05-31 05:40:53.893
 cmptcpyhw0015qiia9fjz0e7q	Meditate 10 minutes	sparkles	#10B981	PAUSED	DAILY	\N	10	minutes	07:30	2026-05-31	cmptcpwif0000qiiahsn8l2i0	2026-05-31 05:40:54.116	2026-05-31 05:40:54.116
+cmptv36zt0003tbiari47e862	Japanese	\N	#10b981	ACTIVE	DAILY	\N	1	\N	\N	2026-05-31	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	2026-05-31 14:15:04.745	2026-05-31 14:15:04.745
 \.
 
 
@@ -516,7 +517,6 @@ cmptcpwtq0007qiiag4gx708f	📅 Work Roadmap	#F59E0B	calendar	PROJECT	TIMELINE	f	
 cmptcpwvb0008qiiant11lgp9	💪 Healthy Lifestyle	#EF4444	heart	PROJECT	CALENDAR	f	f	f	2	cmptcpwif0000qiiahsn8l2i0	cmptcpwnb0003qiiafrawj7u6	2026-05-31 05:40:52.007	2026-05-31 05:40:52.007
 cmptcpwww0009qiiahi92ekj1	Inbox	\N	\N	INBOX	LIST	t	f	f	0	cmptcpwk30001qiia7e6fee30	\N	2026-05-31 05:40:52.064	2026-05-31 05:40:52.064
 cmptd2oq40001caia0j34dnwk	Inbox	#3b82f6	\N	INBOX	LIST	t	f	f	0	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	\N	2026-05-31 05:50:47.98	2026-05-31 05:50:47.98
-cmpte5j7i0005caia3vdqgxsn	Sample	#ec4899	\N	LIST	LIST	f	f	f	0	0U341mhz8xQgBioZwhgO9U3YngfNjWwX	\N	2026-05-31 06:21:00.414	2026-05-31 06:21:00.414
 \.
 
 
@@ -583,29 +583,36 @@ cmptcpxxf000tqiia3roi5xbj	Q2 Architecture & Service Planning	Review system block
 cmptcpy0m000vqiia6yr0u0l8	Sprint 5 Engineering Team Retrospective	Highlight wins, friction points, and action items for next sprint cycles.	COMPLETED	MEDIUM	2026-05-30 05:40:52.351	2026-05-30 05:40:52.351	t	\N	\N	2	2026-05-30 05:40:52.351	cmptcpwtq0007qiiag4gx708f	\N	2026-05-31 05:40:53.494	2026-05-31 05:40:53.494
 cmptcpy27000wqiiavla0r31t	Cardio: 5km morning run	Keep steady heart rate in zone 3 (130-150 bpm). Goal: sub 28 mins.	NORMAL	MEDIUM	2026-06-01 05:40:52.351	2026-06-01 05:40:52.351	t	\N	\N	1	\N	cmptcpwvb0008qiiant11lgp9	\N	2026-05-31 05:40:53.551	2026-05-31 05:40:53.551
 cmptcpy3s000xqiiad2ic9plj	Weight training: Upper body strength	Bench press, shoulder press, pull-ups, and bicep curls.	COMPLETED	HIGH	2026-05-30 05:40:52.351	2026-05-30 05:40:52.351	t	\N	\N	2	2026-05-30 05:40:52.351	cmptcpwvb0008qiiant11lgp9	\N	2026-05-31 05:40:53.608	2026-05-31 05:40:53.608
-cmptjrjes000qcaia557m6kg9	Add focus score	User's should be able to know if they actually spend time on their timebox	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:58:05.188	2026-05-31 08:58:35.018
-cmptn9y6k0001m7iadugshqk0	Create tests for websites	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 10:36:22.988	2026-05-31 10:36:28.167
-cmptip6xq000hcaiax58nrnaf	Custom emojis on lists	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:28:16.094	2026-05-31 08:28:23.893
-cmptiegx70008caia2kmbw5b9	Sidebar should take up full height	\N	NORMAL	MEDIUM	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:19:55.819	2026-05-31 08:25:25.75
-cmptil91e000dcaiaq2v2jxsh	Edit and delete lists	\N	NORMAL	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:25:12.194	2026-05-31 08:25:29.593
-cmptimq8v000ecaiasrknieb4	Remove date on "Today" calendar	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:26:21.151	2026-05-31 08:27:19.332
-cmptinlp3000fcaia7wo41uyf	Page shouldn't be scrollable, only task list.	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:27:01.911	2026-05-31 08:27:25.937
-cmptif45a0009caiajj4rglpt	Tags should be searchable	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:20:25.918	2026-05-31 08:27:31.303
-cmptikkuk000ccaia844ht50z	Re-order tasks	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:24:40.844	2026-05-31 08:27:34.099
+cmptja7k0000ocaiab4htq7c5	Add directly to calendar	\N	NORMAL	HIGH	\N	\N	t	\N	\N	3	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:44:36.672	2026-05-31 14:20:58.764
+cmptjtsmf000rcaiaqeiin1or	Create backup of DB	\N	COMPLETED	NONE	\N	\N	t	\N	\N	0	2026-05-31 13:45:31.445	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:59:50.439	2026-05-31 13:45:31.446
+cmptimq8v000ecaiasrknieb4	Remove date on "Today" calendar	\N	COMPLETED	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 13:05:10.946	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:26:21.151	2026-05-31 13:05:10.947
+cmptil91e000dcaiaq2v2jxsh	Edit and delete lists	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 12:44:52.676	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:25:12.194	2026-05-31 12:44:52.677
+cmptinlp3000fcaia7wo41uyf	Page shouldn't be scrollable, only task list.	\N	COMPLETED	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 12:48:50.035	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:27:01.911	2026-05-31 12:48:50.036
+cmptiegx70008caia2kmbw5b9	Sidebar should take up full height	\N	COMPLETED	MEDIUM	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 12:48:37.638	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:19:55.819	2026-05-31 12:48:37.639
+cmptif45a0009caiajj4rglpt	Tags should be searchable	\N	COMPLETED	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 13:05:14.004	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:20:25.918	2026-05-31 13:05:14.004
+cmptip6xq000hcaiax58nrnaf	Custom emojis on lists	\N	COMPLETED	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 12:52:10.601	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:28:16.094	2026-05-31 12:52:10.602
+cmptiwv3b000kcaia97jg2fgu	Add subtasks	\N	NORMAL	HIGH	\N	2026-06-01 00:00:00	t	\N	\N	4	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:34:13.991	2026-05-31 14:21:07.016
 cmptifiss000acaiab8a8gos9	Fix pressing enter triggers priority	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:41:16.193	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:20:44.908	2026-05-31 10:41:16.193
 cmptihjup000bcaiauhvvlb63	Add loading screen on pages	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:35:33.913	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:22:19.585	2026-05-31 10:35:33.914
-cmptiv3mn000jcaiaxylewbwo	Kanban view	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:32:51.743	2026-05-31 08:33:02.95
-cmptj4ihh000lcaia9fqs86u6	Add sections to task list	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:40:10.901	2026-05-31 08:40:10.901
-cmptj4xc3000mcaiah6lofdjp	BUG: Double inbox	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:40:30.147	2026-05-31 08:40:30.147
-cmptj9ds0000ncaiar28c7yln	Make search a dedicated page and modal	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:43:58.08	2026-05-31 08:43:58.08
-cmptiwv3b000kcaia97jg2fgu	Add subtasks	\N	NORMAL	NONE	\N	2026-05-04 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:34:13.991	2026-05-31 08:44:16.228
-cmptja7k0000ocaiab4htq7c5	Add directly to calendar	\N	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:44:36.672	2026-05-31 08:44:36.672
-cmptjrfsx000pcaiaexa212ma	Add focus mode on tasks	\N	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:58:00.513	2026-05-31 08:58:00.513
-cmptjtsmf000rcaiaqeiin1or	Create backup of DB	\N	NORMAL	NONE	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:59:50.439	2026-05-31 08:59:50.439
+cmptjrjes000qcaia557m6kg9	Add focus score	User's should be able to know if they actually spend time on their timebox	NORMAL	NONE	\N	\N	t	\N	\N	1	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:58:05.188	2026-05-31 13:46:07.309
 cmptionza000gcaiahhyconko	Add sort by and group by on tasks	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:28:52.767	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:27:51.526	2026-05-31 10:28:52.78
-cmptn99am0000m7iahvkrkkoo	Add task complete animation and sound	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 10:35:50.734	2026-05-31 10:35:50.734
 cmptiprf0000icaialqeqvr6m	BUG: Pressing the components adds the task	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 10:41:03.261	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:28:42.636	2026-05-31 10:41:03.262
-cmptnkwky0003m7ia8kcv8dkf	Backup Prisma Postgres DB	\N	NORMAL	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 10:44:54.13	2026-05-31 10:44:54.13
+cmptjrfsx000pcaiaexa212ma	Add focus mode on tasks	\N	NORMAL	NONE	\N	\N	t	\N	\N	2	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:58:00.513	2026-05-31 13:46:07.364
+cmptn99am0000m7iahvkrkkoo	Add task complete animation and sound	\N	NORMAL	NONE	\N	2026-05-31 00:00:00	t	\N	\N	6	\N	\N	\N	2026-05-31 10:35:50.734	2026-05-31 13:46:07.587
+cmptnkwky0003m7ia8kcv8dkf	Backup Prisma Postgres DB	\N	COMPLETED	HIGH	\N	2026-05-31 00:00:00	t	\N	\N	0	2026-05-31 14:10:16.017	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 10:44:54.13	2026-05-31 14:10:16.017
+cmptu0sgu0004rqiauvm4vdzc	Clean up completed and trash sections	\N	NORMAL	LOW	\N	2026-06-01 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 13:45:12.99	2026-05-31 14:11:17.398
+cmptj9ds0000ncaiar28c7yln	Make search a dedicated page and modal	\N	NORMAL	NONE	\N	2026-06-01 00:00:00	t	\N	\N	5	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:43:58.08	2026-05-31 14:18:29.394
+cmptv26z10002tbia1ymn3v6y	Add slide animation to edit	\N	NORMAL	MEDIUM	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 14:14:18.061	2026-05-31 14:20:42.258
+cmptv226m0001tbia9z7axb6o	Add transition animations to pages	\N	NORMAL	MEDIUM	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 14:14:11.854	2026-05-31 14:20:44.272
+cmptv3mqu0007tbiav510kx5g	Edit and delete habits	\N	NORMAL	HIGH	\N	2026-05-03 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 14:15:25.158	2026-05-31 14:20:49.056
+cmptn9y6k0001m7iadugshqk0	Create tests for websites	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	0	\N	\N	\N	2026-05-31 10:36:22.988	2026-05-31 13:24:05.738
+cmptv3q1u0008tbia9hlsb4tc	Habit settings	\N	NORMAL	HIGH	\N	2026-05-03 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 14:15:29.442	2026-05-31 14:20:51.686
+cmptv7bpa0009tbiasxkt5s4i	Add stopwatch to pomodoro	\N	NORMAL	MEDIUM	\N	2026-06-01 00:00:00	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 14:18:17.47	2026-05-31 14:21:24.984
+cmptj4ihh000lcaia9fqs86u6	Add sections to task list	\N	NORMAL	MEDIUM	\N	2026-06-01 00:00:00	t	\N	\N	7	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:40:10.901	2026-05-31 14:21:31.768
+cmptuz4rd0000tbiafsn2hxgg	Add duration to tasks	\N	NORMAL	MEDIUM	\N	\N	t	\N	\N	0	\N	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 14:11:55.225	2026-05-31 14:21:37.268
+cmptiv3mn000jcaiaxylewbwo	Kanban view	\N	NORMAL	LOW	\N	2026-05-31 00:00:00	t	\N	\N	2	\N	\N	\N	2026-05-31 08:32:51.743	2026-05-31 13:24:05.852
+cmptikkuk000ccaia844ht50z	Re-order tasks	\N	COMPLETED	LOW	\N	2026-05-31 00:00:00	t	\N	\N	1	2026-05-31 13:24:08.867	\N	\N	2026-05-31 08:24:40.844	2026-05-31 13:24:08.868
+cmptj4xc3000mcaiah6lofdjp	BUG: Double inbox	\N	COMPLETED	NONE	\N	2026-05-31 00:00:00	t	\N	\N	4	2026-05-31 13:24:15.279	cmptd2oq40001caia0j34dnwk	\N	2026-05-31 08:40:30.147	2026-05-31 13:24:15.28
 \.
 
 
@@ -995,5 +1002,5 @@ REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QWj0ZnPwueUmo75ABJfpvYIaKDg92GzS1UkDIMEVcQFUECqstLsTQqJaZz9kd8z
+\unrestrict EvnQFowkinzigCIT5s8w8ecFjRVBqdjRbc84aJxTCnlbG5WUIM9sbSdccvppFth
 

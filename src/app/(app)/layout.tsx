@@ -2,6 +2,7 @@ import { auth } from "@/src/lib/auth"
 import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { DashboardProvider } from "@/src/components/dashboard/DashboardContext"
+import { CelebrationProvider } from "@/components/ui/CelebrationContext"
 import AppShell from "@/src/components/dashboard/AppShell"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <DashboardProvider user={session.user}>
-      <AppShell>{children}</AppShell>
+      <CelebrationProvider>
+        <AppShell>{children}</AppShell>
+      </CelebrationProvider>
     </DashboardProvider>
   )
 }
+
