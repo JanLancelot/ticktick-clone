@@ -18,7 +18,8 @@ import {
   Check,
   List,
   Columns3,
-  Trash2
+  Trash2,
+  Inbox
 } from "lucide-react"
 import { AnimatedCheckbox } from "@/components/ui/AnimatedCheckbox"
 import { useCelebration } from "@/components/ui/CelebrationContext"
@@ -67,7 +68,139 @@ export function TasksList({
   const [sortOpen, setSortOpen] = useState(false)
   const [completedDateFilter, setCompletedDateFilter] = useState<string>("all")
   const [completedListFilter, setCompletedListFilter] = useState<string>("all")
+  const [completedDateOpen, setCompletedDateOpen] = useState(false)
+  const [completedListOpen, setCompletedListOpen] = useState(false)
+  
+  // Custom Calendar State
+  const [calendarYear, setCalendarYear] = useState<number>(new Date().getFullYear())
+  const [calendarMonth, setCalendarMonth] = useState<number>(new Date().getMonth())
+  const [pickerMode, setPickerMode] = useState<"single" | "range">("single")
+  const [rangeStart, setRangeStart] = useState<string | null>(null)
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null)
+
   const { triggerCelebration } = useCelebration()
+
+  // Sync calendar display to active filters on opening
+  useEffect(() => {
+    if (completedDateOpen) {
+      if (completedDateFilter.startsWith("custom:")) {
+        const dateStr = completedDateFilter.split("custom:")[1]
+        const dateObj = new Date(dateStr + "T00:00:00")
+        if (!isNaN(dateObj.getTime())) {
+          setCalendarYear(dateObj.getFullYear())
+          setCalendarMonth(dateObj.getMonth())
+          setPickerMode("single")
+        }
+      } else if (completedDateFilter.startsWith("range:")) {
+        const rangeStr = completedDateFilter.split("range:")[1]
+        const [startStr, endStr] = rangeStr.split("_")
+        const startObj = new Date(startStr + "T00:00:00")
+        if (!isNaN(startObj.getTime())) {
+          setCalendarYear(startObj.getFullYear())
+          setCalendarMonth(startObj.getMonth())
+          setPickerMode("range")
+          setRangeStart(startStr)
+          setRangeEnd(endStr)
+        }
+      }
+    }
+  }, [completedDateFilter, completedDateOpen])
+
+  const getCalendarDays = (year: number, month: number) => {
+    const firstDayIndex = new Date(year, month, 1).getDay()
+    const totalDays = new Date(year, month + 1, 0).getDate()
+    const prevTotalDays = new Date(year, month, 0).getDate()
+
+    const days: { dateStr: string; dayNum: number; isCurrentMonth: boolean }[] = []
+
+    // Padding from previous month
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const d = prevTotalDays - i
+      const m = month === 0 ? 11 : month - 1
+      const y = month === 0 ? year - 1 : year
+      days.push({
+        dateStr: `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+        dayNum: d,
+        isCurrentMonth: false,
+      })
+    }
+
+    // Current month days
+    for (let i = 1; i <= totalDays; i++) {
+      days.push({
+        dateStr: `${year}-${String(month + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`,
+        dayNum: i,
+        isCurrentMonth: true,
+      })
+    }
+
+    // Padding from next month
+    const remaining = 42 - days.length
+    for (let i = 1; i <= remaining; i++) {
+      const m = month === 11 ? 0 : month + 1
+      const y = month === 11 ? year + 1 : year
+      days.push({
+        dateStr: `${y}-${String(m + 1).padStart(2, "0")}-${String(i).padStart(2, "0")}`,
+        dayNum: i,
+        isCurrentMonth: false,
+      })
+    }
+
+    return days
+  }
+
+  const getSelectedListDetails = () => {
+    if (completedListFilter === "all") {
+      return { name: "All Lists", icon: <List className="h-3.5 w-3.5 shrink-0 opacity-70" />, color: null }
+    }
+    if (completedListFilter === "inbox") {
+      return { name: "Inbox", icon: <Inbox className="h-3.5 w-3.5 shrink-0 opacity-70" />, color: null }
+    }
+    const proj = projects.find((p) => p.id === completedListFilter)
+    if (proj) {
+      return {
+        name: proj.name,
+        icon: <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: proj.color }} />,
+        color: proj.color,
+      }
+    }
+    return { name: "Unknown List", icon: <List className="h-3.5 w-3.5 shrink-0 opacity-70" />, color: null }
+  }
+
+  const getSelectedDateLabel = () => {
+    if (completedDateFilter === "all") return "All Dates"
+    if (completedDateFilter === "today") return "Today"
+    if (completedDateFilter === "yesterday") return "Yesterday"
+    if (completedDateFilter === "week") return "Last 7 Days"
+    if (completedDateFilter === "month") return "Last 30 Days"
+    if (completedDateFilter === "year") return "This Year"
+    if (completedDateFilter.startsWith("custom:")) {
+      const parts = completedDateFilter.split("custom:")
+      if (parts[1]) {
+        try {
+          const dateObj = new Date(parts[1] + "T00:00:00")
+          return dateObj.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+        } catch {
+          return parts[1]
+        }
+      }
+    }
+    if (completedDateFilter.startsWith("range:")) {
+      const parts = completedDateFilter.split("range:")
+      if (parts[1]) {
+        const [startStr, endStr] = parts[1].split("_")
+        try {
+          const startObj = new Date(startStr + "T00:00:00")
+          const endObj = new Date(endStr + "T00:00:00")
+          const opt = { month: "short", day: "numeric" } as const
+          return `${startObj.toLocaleDateString(undefined, opt)} - ${endObj.toLocaleDateString(undefined, opt)}`
+        } catch {
+          return `${startStr} - ${endStr}`
+        }
+      }
+    }
+    return "All Dates"
+  }
 
   const renderSubtasksForList = (parentTask: Task) => {
     const taskSubtasks = tasksHook.tasks.filter((t) => t.parentId === parentTask.id)
@@ -145,6 +278,15 @@ export function TasksList({
         if (!t.completedAt) return false
         const compDateStr = t.completedAt.split("T")[0]
 
+        if (completedDateFilter.startsWith("custom:")) {
+          const targetDate = completedDateFilter.split("custom:")[1]
+          return compDateStr === targetDate
+        }
+        if (completedDateFilter.startsWith("range:")) {
+          const rangeStr = completedDateFilter.split("range:")[1]
+          const [startStr, endStr] = rangeStr.split("_")
+          return compDateStr >= startStr && compDateStr <= endStr
+        }
         if (completedDateFilter === "today") {
           return compDateStr === todayStr
         }
@@ -661,34 +803,321 @@ export function TasksList({
       <div className="space-y-6 animate-fade-in duration-200">
         {/* Dropdown selectors */}
         <div className="flex flex-wrap gap-2.5 pb-2 select-none">
-          {/* Date Selector */}
-          <select
-            value={completedDateFilter}
-            onChange={(e) => setCompletedDateFilter(e.target.value)}
-            className="px-3.5 py-1.5 rounded-xl border border-border bg-card text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none focus:ring-0 focus-visible:ring-0 shadow-3xs"
-          >
-            <option value="all">All Dates</option>
-            <option value="today">Today</option>
-            <option value="yesterday">Yesterday</option>
-            <option value="week">Last 7 Days</option>
-            <option value="month">Last 30 Days</option>
-            <option value="year">This Year</option>
-          </select>
+          {/* Date Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setCompletedDateOpen(!completedDateOpen)
+                setCompletedListOpen(false)
+              }}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer bg-card shadow-3xs ${
+                completedDateOpen || completedDateFilter !== "all"
+                  ? "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
+                  : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              <Calendar className="h-3.5 w-3.5 opacity-80" />
+              <span>{getSelectedDateLabel()}</span>
+              <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${completedDateOpen ? "rotate-180" : ""}`} />
+            </button>
 
-          {/* List Selector */}
-          <select
-            value={completedListFilter}
-            onChange={(e) => setCompletedListFilter(e.target.value)}
-            className="px-3.5 py-1.5 rounded-xl border border-border bg-card text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none focus:ring-0 focus-visible:ring-0 shadow-3xs"
-          >
-            <option value="all">All Lists</option>
-            <option value="inbox">Inbox</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            {completedDateOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setCompletedDateOpen(false)} />
+                <div className="absolute left-0 mt-2 w-72 bg-card border border-border/80 rounded-2xl shadow-xl py-2.5 z-20 animate-fade-in duration-100 flex flex-col">
+                  {/* Preset Options Grid */}
+                  <div className="px-3 py-1.5 border-b border-border/40 select-none">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground/60 tracking-wider mb-2">
+                      Filter by Date
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { id: "all", label: "All Dates" },
+                        { id: "today", label: "Today" },
+                        { id: "yesterday", label: "Yesterday" },
+                        { id: "week", label: "Last 7 Days" },
+                        { id: "month", label: "Last 30 Days" },
+                        { id: "year", label: "This Year" },
+                      ].map((opt) => {
+                        const isSelected = completedDateFilter === opt.id
+                        return (
+                          <button
+                            key={opt.id}
+                            onClick={() => {
+                              setCompletedDateFilter(opt.id)
+                              setCompletedDateOpen(false)
+                            }}
+                            className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer truncate ${
+                              isSelected
+                                ? "bg-primary text-primary-foreground shadow-3xs"
+                                : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Picker Mode Selector */}
+                  <div className="px-3 pt-3 pb-1 flex items-center justify-between select-none">
+                    <span className="text-[9px] font-black uppercase text-muted-foreground/60 tracking-wider">
+                      Custom Calendar
+                    </span>
+                    <div className="flex bg-muted/60 p-0.5 rounded-lg text-[9px] font-bold">
+                      <button
+                        onClick={() => {
+                          setPickerMode("single")
+                          setRangeStart(null)
+                          setRangeEnd(null)
+                        }}
+                        className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                          pickerMode === "single"
+                            ? "bg-card text-foreground shadow-3xs font-extrabold"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Single
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPickerMode("range")
+                        }}
+                        className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
+                          pickerMode === "range"
+                            ? "bg-card text-foreground shadow-3xs font-extrabold"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        Range
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Calendar Navigation Header */}
+                  <div className="flex items-center justify-between px-3 py-1.5 select-none">
+                    <button
+                      onClick={() => {
+                        if (calendarMonth === 0) {
+                          setCalendarMonth(11)
+                          setCalendarYear((y) => y - 1)
+                        } else {
+                          setCalendarMonth((m) => m - 1)
+                        }
+                      }}
+                      className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      <ChevronUp className="h-4 w-4 -rotate-90" />
+                    </button>
+                    <span className="text-xs font-extrabold text-foreground">
+                      {new Date(calendarYear, calendarMonth).toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (calendarMonth === 11) {
+                          setCalendarMonth(0)
+                          setCalendarYear((y) => y + 1)
+                        } else {
+                          setCalendarMonth((m) => m + 1)
+                        }
+                      }}
+                      className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                    </button>
+                  </div>
+
+                  {/* Weekday Headers */}
+                  <div className="grid grid-cols-7 gap-px text-center px-3 mb-1 select-none">
+                    {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                      <span key={day} className="text-[9px] font-black text-muted-foreground/40 py-1 uppercase">
+                        {day}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Day Grid */}
+                  <div className="grid grid-cols-7 gap-y-1 px-3">
+                    {getCalendarDays(calendarYear, calendarMonth).map((day) => {
+                      const isToday = day.dateStr === new Date().toISOString().split("T")[0]
+                      
+                      let isSelected = false
+                      let isInRange = false
+                      let isRangeStartEdge = false
+                      let isRangeEndEdge = false
+
+                      if (pickerMode === "single") {
+                        isSelected = completedDateFilter === "custom:" + day.dateStr
+                      } else {
+                        isRangeStartEdge = day.dateStr === rangeStart
+                        isRangeEndEdge = day.dateStr === rangeEnd
+                        isSelected = isRangeStartEdge || isRangeEndEdge
+                        if (rangeStart && rangeEnd) {
+                          isInRange = day.dateStr > rangeStart && day.dateStr < rangeEnd
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={day.dateStr}
+                          onClick={() => {
+                            if (pickerMode === "single") {
+                              setCompletedDateFilter("custom:" + day.dateStr)
+                              setCompletedDateOpen(false)
+                            } else {
+                              if (!rangeStart || (rangeStart && rangeEnd)) {
+                                setRangeStart(day.dateStr)
+                                setRangeEnd(null)
+                              } else {
+                                if (day.dateStr < rangeStart) {
+                                  setRangeStart(day.dateStr)
+                                } else {
+                                  setRangeEnd(day.dateStr)
+                                  setCompletedDateFilter(`range:${rangeStart}_${day.dateStr}`)
+                                  setCompletedDateOpen(false)
+                                }
+                              }
+                            }
+                          }}
+                          className={`relative h-8 w-8 text-[10px] font-bold transition-all flex items-center justify-center cursor-pointer select-none rounded-lg ${
+                            !day.isCurrentMonth ? "opacity-35" : ""
+                          } ${
+                            isSelected
+                              ? "bg-primary text-primary-foreground shadow-3xs"
+                              : isInRange
+                              ? "bg-primary/10 text-primary rounded-none"
+                              : "hover:bg-muted text-foreground"
+                          } ${
+                            isRangeStartEdge && rangeEnd ? "rounded-r-none" : ""
+                          } ${
+                            isRangeEndEdge && rangeStart ? "rounded-l-none" : ""
+                          }`}
+                        >
+                          {isToday && !isSelected && (
+                            <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
+                          )}
+                          <span>{day.dayNum}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Custom Footer */}
+                  <div className="flex items-center justify-between px-3 pt-2.5 pb-1 border-t border-border/40 mt-3 select-none">
+                    <button
+                      onClick={() => {
+                        setCompletedDateFilter("all")
+                        setRangeStart(null)
+                        setRangeEnd(null)
+                        setCompletedDateOpen(false)
+                      }}
+                      className="text-[9px] font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    {pickerMode === "range" && rangeStart && !rangeEnd && (
+                      <span className="text-[8px] font-extrabold text-primary animate-pulse uppercase tracking-wider">
+                        Select End Date...
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* List Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setCompletedListOpen(!completedListOpen)
+                setCompletedDateOpen(false)
+              }}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer bg-card shadow-3xs ${
+                completedListOpen || completedListFilter !== "all"
+                  ? "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
+                  : "border-border text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              {getSelectedListDetails().icon}
+              <span>{getSelectedListDetails().name}</span>
+              <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${completedListOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {completedListOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setCompletedListOpen(false)} />
+                <div className="absolute left-0 mt-2 w-52 bg-card border border-border/80 rounded-xl shadow-lg py-1 z-20 max-h-72 overflow-y-auto animate-fade-in duration-100">
+                  <div className="px-3 py-1.5 border-b border-border/40 mb-1 select-none">
+                    <p className="text-[9px] font-black uppercase text-muted-foreground/60 tracking-wider">
+                      Filter by List
+                    </p>
+                  </div>
+                  
+                  {/* All Lists */}
+                  <button
+                    onClick={() => {
+                      setCompletedListFilter("all")
+                      setCompletedListOpen(false)
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
+                      completedListFilter === "all" ? "bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <List className="h-3.5 w-3.5 opacity-70" />
+                      <span>All Lists</span>
+                    </div>
+                    {completedListFilter === "all" && <Check className="h-3.5 w-3.5 stroke-[3px]" />}
+                  </button>
+
+                  {/* Inbox */}
+                  <button
+                    onClick={() => {
+                      setCompletedListFilter("inbox")
+                      setCompletedListOpen(false)
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
+                      completedListFilter === "inbox" ? "bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Inbox className="h-3.5 w-3.5 opacity-70 shrink-0" />
+                      <span>Inbox</span>
+                    </div>
+                    {completedListFilter === "inbox" && <Check className="h-3.5 w-3.5 stroke-[3px]" />}
+                  </button>
+
+                  {projects.length > 0 && (
+                    <div className="border-t border-border/40 my-1 pt-1">
+                      {projects.map((proj) => {
+                        const isSelected = completedListFilter === proj.id
+                        return (
+                          <button
+                            key={proj.id}
+                            onClick={() => {
+                              setCompletedListFilter(proj.id)
+                              setCompletedListOpen(false)
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
+                              isSelected ? "bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: proj.color }} />
+                              <span className="truncate">{proj.name}</span>
+                            </div>
+                            {isSelected && <Check className="h-3.5 w-3.5 stroke-[3px]" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Grouped Completed Tasks list */}
