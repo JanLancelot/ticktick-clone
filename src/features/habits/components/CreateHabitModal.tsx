@@ -15,9 +15,12 @@ import {
   Trash2,
   SmilePlus,
 } from "lucide-react"
+import { Habit } from "../types"
 
 interface CreateHabitModalProps {
-  onAddHabit: (
+  mode?: "create" | "edit"
+  habit?: Habit | null
+  onAddHabit?: (
     name: string,
     color: string,
     icon?: string | null,
@@ -35,6 +38,10 @@ interface CreateHabitModalProps {
     frequencyType?: string | null,
     frequencyValue?: number | null
   ) => Promise<void> | void
+  onEditHabit?: (
+    habitId: string,
+    updates: Partial<Omit<Habit, "id" | "records" | "streak">>
+  ) => Promise<void> | void
   onCancel: () => void
   existingSections?: string[]
 }
@@ -46,47 +53,73 @@ const DEFAULT_EMOJIS = [
 
 const COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"]
 
-export function CreateHabitModal({ onAddHabit, onCancel, existingSections = [] }: CreateHabitModalProps) {
-  const [name, setName] = useState("")
-  const [color, setColor] = useState("#3b82f6")
-  const [icon, setIcon] = useState("😊")
+export function CreateHabitModal({
+  mode = "create",
+  habit = null,
+  onAddHabit,
+  onEditHabit,
+  onCancel,
+  existingSections = [],
+}: CreateHabitModalProps) {
+  const isEdit = mode === "edit" && !!habit
+
+  const [name, setName] = useState(habit?.name || "")
+  const [color, setColor] = useState(habit?.color || "#3b82f6")
+  const [icon, setIcon] = useState(habit?.icon || "😊")
   
   // Custom Emoji Picker state
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [customEmoji, setCustomEmoji] = useState("")
   
   // Frequency State
-  const [frequencyType, setFrequencyType] = useState<"daily" | "weekly" | "interval">("daily")
-  const [repeatDays, setRepeatDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]) // Custom weekdays for daily
-  const [weeklyDaysCount, setWeeklyDaysCount] = useState(1) // Weekly 1-7 days
-  const [intervalDays, setIntervalDays] = useState(2) // Every 2 days
+  const [frequencyType, setFrequencyType] = useState<"daily" | "weekly" | "interval">(
+    (habit?.frequencyType as "daily" | "weekly" | "interval") || "daily"
+  )
+  const [repeatDays, setRepeatDays] = useState<number[]>(habit?.repeatDays || [0, 1, 2, 3, 4, 5, 6]) // Custom weekdays for daily
+  const [weeklyDaysCount, setWeeklyDaysCount] = useState(
+    habit?.frequencyType === "weekly" ? habit.frequencyValue || 1 : 1
+  ) // Weekly 1-7 days
+  const [intervalDays, setIntervalDays] = useState(
+    habit?.frequencyType === "interval" ? habit.frequencyValue || 2 : 2
+  ) // Every 2 days
   const [showFreqDropdown, setShowFreqDropdown] = useState(false)
   
   // Goal State
-  const [goalType, setGoalType] = useState<"all" | "amount">("all")
-  const [goalCount, setGoalCount] = useState(1)
-  const [unit, setUnit] = useState("Count")
-  const [checkingMode, setCheckingMode] = useState<"auto" | "manual">("auto")
-  const [recordCount, setRecordCount] = useState(1)
+  const [goalType, setGoalType] = useState<"all" | "amount">(
+    (habit?.goalType as "all" | "amount") || "all"
+  )
+  const [goalCount, setGoalCount] = useState(habit?.goal || 1)
+  const [unit, setUnit] = useState(habit?.unit || "Count")
+  const [checkingMode, setCheckingMode] = useState<"auto" | "manual">(
+    (habit?.checkingMode as "auto" | "manual") || "auto"
+  )
+  const [recordCount, setRecordCount] = useState(habit?.recordCount || 1)
   const [showGoalDropdown, setShowGoalDropdown] = useState(false)
 
   // Start Date Calendar State
-  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0])
+  const initialStartDate = habit?.startDate
+    ? (habit.startDate.includes("T") 
+        ? habit.startDate.split("T")[0] 
+        : habit.startDate)
+    : new Date().toISOString().split("T")[0]
+  const [startDate, setStartDate] = useState(initialStartDate)
   const [showCalendar, setShowCalendar] = useState(false)
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [currentMonth, setCurrentMonth] = useState(new Date(initialStartDate))
 
   // Goal Days State
-  const [goalDays, setGoalDays] = useState("Forever")
+  const [goalDays, setGoalDays] = useState(habit?.goalDays || "Forever")
   const [showGoalDaysTooltip, setShowGoalDaysTooltip] = useState(false)
 
   // Section State
-  const [section, setSection] = useState("Others")
+  const [section, setSection] = useState(habit?.section || "Others")
   const [customSection, setCustomSection] = useState("")
   const [showCustomSectionInput, setShowCustomSectionInput] = useState(false)
   const [sectionsList, setSectionsList] = useState(["Others", "Morning", "Afternoon", "Night"])
 
   // Reminders State
-  const [reminders, setReminders] = useState<string[]>([])
+  const [reminders, setReminders] = useState<string[]>(
+    habit?.reminderTime ? habit.reminderTime.split(",") : []
+  )
   const [showTimePicker, setShowTimePicker] = useState(false)
   const [pickerHour, setPickerHour] = useState("09")
   const [pickerMin, setPickerMin] = useState("00")
@@ -131,24 +164,51 @@ export function CreateHabitModal({ onAddHabit, onCancel, existingSections = [] }
     if (frequencyType === "weekly") freqVal = weeklyDaysCount
     if (frequencyType === "interval") freqVal = intervalDays
 
-    onAddHabit(
-      name.trim(),
-      color,
-      icon,
-      fallbackFreq,
-      frequencyType === "daily" ? repeatDays : [],
-      goalCount,
-      goalType === "amount" ? unit : null,
-      reminderStr,
-      startDate,
-      goalDays,
-      showCustomSectionInput && customSection.trim() ? customSection.trim() : section,
-      goalType,
-      checkingMode,
-      recordCount,
-      frequencyType,
-      freqVal
-    )
+    const targetSection = showCustomSectionInput && customSection.trim() ? customSection.trim() : section
+
+    if (isEdit) {
+      if (onEditHabit && habit) {
+        onEditHabit(habit.id, {
+          name: name.trim(),
+          color,
+          icon,
+          frequency: fallbackFreq,
+          repeatDays: frequencyType === "daily" ? repeatDays : [],
+          goal: goalCount,
+          unit: goalType === "amount" ? unit : null,
+          reminderTime: reminderStr,
+          startDate,
+          goalDays,
+          section: targetSection,
+          goalType,
+          checkingMode,
+          recordCount,
+          frequencyType,
+          frequencyValue: freqVal,
+        })
+      }
+    } else {
+      if (onAddHabit) {
+        onAddHabit(
+          name.trim(),
+          color,
+          icon,
+          fallbackFreq,
+          frequencyType === "daily" ? repeatDays : [],
+          goalCount,
+          goalType === "amount" ? unit : null,
+          reminderStr,
+          startDate,
+          goalDays,
+          targetSection,
+          goalType,
+          checkingMode,
+          recordCount,
+          frequencyType,
+          freqVal
+        )
+      }
+    }
   }
 
   // Weekday togglers helper
@@ -223,7 +283,9 @@ export function CreateHabitModal({ onAddHabit, onCancel, existingSections = [] }
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black tracking-tight text-foreground/90">Create Habit</h2>
+          <h2 className="text-lg font-black tracking-tight text-foreground/90">
+            {isEdit ? "Edit Habit" : "Create Habit"}
+          </h2>
           <button
             onClick={onCancel}
             className="p-1.5 hover:bg-muted rounded-xl transition-all text-muted-foreground hover:text-foreground cursor-pointer"

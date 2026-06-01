@@ -29,6 +29,10 @@ interface HabitsViewProps {
   ) => Promise<void> | void
   onToggleRecord: (habitId: string, dateStr: string) => void
   onDeleteHabit?: (habitId: string) => Promise<void> | void
+  onEditHabit: (
+    habitId: string,
+    updates: Partial<Omit<Habit, "id" | "records" | "streak">>
+  ) => Promise<void> | void
 }
 
 export function HabitsView({
@@ -38,9 +42,12 @@ export function HabitsView({
   onAddHabit,
   onToggleRecord,
   onDeleteHabit,
+  onEditHabit,
 }: HabitsViewProps) {
   // Extract all unique sections from habits or use defaults
   const existingSections = Array.from(new Set(habits.map((h) => h.section || "Others")))
+  
+  const [editingHabit, setEditingHabit] = React.useState<Habit | null>(null)
   
   // Group habits by section
   const groupedHabits: Record<string, Habit[]> = {}
@@ -104,6 +111,20 @@ export function HabitsView({
         />
       )}
 
+      {/* Edit Habit Modal Popup */}
+      {editingHabit && (
+        <CreateHabitModal
+          mode="edit"
+          habit={editingHabit}
+          onEditHabit={async (habitId, updates) => {
+            await onEditHabit(habitId, updates)
+            setEditingHabit(null)
+          }}
+          onCancel={() => setEditingHabit(null)}
+          existingSections={existingSections}
+        />
+      )}
+
       {/* Habits grouped by section */}
       {habits.length === 0 ? (
         <div className="text-center py-16 bg-card border border-border border-dashed rounded-3xl p-6 shadow-inner select-none animate-fade-in">
@@ -138,6 +159,7 @@ export function HabitsView({
                       habit={habit}
                       onToggleRecord={onToggleRecord}
                       onDeleteHabit={onDeleteHabit}
+                      onEditHabit={() => setEditingHabit(habit)}
                     />
                   ))}
                 </div>

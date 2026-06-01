@@ -1,14 +1,15 @@
 import React from "react"
 import { Habit } from "../types"
-import { Flame, Check, Trash2, CalendarRange, Clock } from "lucide-react"
+import { Flame, Check, Trash2, CalendarRange, Clock, Sliders } from "lucide-react"
 
 interface HabitCardProps {
   habit: Habit
   onToggleRecord: (habitId: string, dateStr: string) => void
   onDeleteHabit?: (habitId: string) => Promise<void> | void
+  onEditHabit?: () => void
 }
 
-export function HabitCard({ habit, onToggleRecord, onDeleteHabit }: HabitCardProps) {
+export function HabitCard({ habit, onToggleRecord, onDeleteHabit, onEditHabit }: HabitCardProps) {
   const getTodayDateString = () => new Date().toISOString().split("T")[0]
 
   const todayStr = getTodayDateString()
@@ -40,21 +41,35 @@ export function HabitCard({ habit, onToggleRecord, onDeleteHabit }: HabitCardPro
   return (
     <div className="bg-card border border-border/80 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:shadow-md hover:border-border transition-all duration-300 relative group animate-fade-in">
       
-      {/* Delete button (visible on hover) */}
-      {onDeleteHabit && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            if (confirm(`Are you sure you want to delete "${habit.name}"?`)) {
-              onDeleteHabit(habit.id)
-            }
-          }}
-          className="absolute right-3.5 top-3.5 p-1 text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 rounded-lg cursor-pointer transition-all opacity-0 group-hover:opacity-100"
-          title="Delete Habit"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      )}
+      {/* Edit & Delete controls (visible on card hover) */}
+      <div className="absolute right-3.5 top-3.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        {onEditHabit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onEditHabit()
+            }}
+            className="p-1 text-muted-foreground/60 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg cursor-pointer transition-colors"
+            title="Edit Habit Settings"
+          >
+            <Sliders className="h-4 w-4" />
+          </button>
+        )}
+        {onDeleteHabit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm(`Are you sure you want to delete "${habit.name}"?`)) {
+                onDeleteHabit(habit.id)
+              }
+            }}
+            className="p-1 text-muted-foreground/60 hover:text-red-500 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors"
+            title="Delete Habit"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -79,17 +94,6 @@ export function HabitCard({ habit, onToggleRecord, onDeleteHabit }: HabitCardPro
           </div>
         </div>
 
-        {/* Quick completion toggle */}
-        <button
-          onClick={() => onToggleRecord(habit.id, todayStr)}
-          className={`px-3.5 py-1.5 rounded-xl text-[10px] font-black border transition-all cursor-pointer select-none active:scale-95 ${
-            isDoneToday
-              ? "bg-green-500/10 border-green-500/20 text-green-600 shadow-2xs font-extrabold"
-              : "bg-muted/40 hover:bg-muted border-border/80 text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {isDoneToday ? "Done Today" : "Log Completion"}
-        </button>
       </div>
 
       {/* Goal Days & Reminders Meta details */}
