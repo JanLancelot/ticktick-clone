@@ -32,6 +32,74 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const dashboard = useDashboard()
   const [editingProject, setEditingProject] = React.useState<Project | null>(null)
 
+  // Notifications State & Logic
+  const [activeNotification, setActiveNotification] = React.useState<{
+    habitId: string
+    name: string
+    icon: string | null
+    color: string
+    time: string
+  } | null>(null)
+
+  const triggeredRef = React.useRef<Record<string, boolean>>({})
+
+  useEffect(() => {
+    // Request browser notification permission on mount
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission()
+      }
+    }
+
+    const interval = setInterval(() => {
+      const now = new Date()
+      const hours = now.getHours().toString().padStart(2, "0")
+      const minutes = now.getMinutes().toString().padStart(2, "0")
+      const timeStr = `${hours}:${minutes}`
+      const dateStr = now.toISOString().split("T")[0]
+
+      const habitsList = dashboard.habitsHook.habits
+
+      habitsList.forEach((habit) => {
+        if (!habit.reminderTime) return
+
+        const times = habit.reminderTime.split(",")
+        if (times.includes(timeStr)) {
+          const triggerKey = `${habit.id}_${timeStr}_${dateStr}`
+          if (!triggeredRef.current[triggerKey]) {
+            triggeredRef.current[triggerKey] = true
+
+            // Trigger custom in-app notification
+            setActiveNotification({
+              habitId: habit.id,
+              name: habit.name,
+              icon: habit.icon || null,
+              color: habit.color || "#3b82f6",
+              time: timeStr,
+            })
+
+            // Trigger native browser notification
+            if (
+              typeof window !== "undefined" &&
+              "Notification" in window &&
+              Notification.permission === "granted"
+            ) {
+              try {
+                new Notification(`⏰ Habit Reminder: ${habit.name}`, {
+                  body: `It's ${timeStr}! Time to check in for "${habit.name}".`,
+                })
+              } catch (err) {
+                console.error("Failed to show native notification", err)
+              }
+            }
+          }
+        }
+      })
+    }, 15000) // check every 15s for precision
+
+    return () => clearInterval(interval)
+  }, [dashboard.habitsHook.habits])
+
   const {
     user,
     projectsHook,
@@ -715,6 +783,50 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           }}
           onClose={() => projectsHook.setShowAddProject(false)}
         />
+      )}
+
+      {/* Custom Premium Toast Notification */}
+      {activeNotification && (
+        <div className="fixed bottom-6 right-6 z-50 w-80 bg-card border border-border/80 p-4.5 rounded-2xl shadow-2xl flex flex-col space-y-3.5 animate-scale-in text-foreground select-none">
+          <div className="flex items-start gap-3">
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-inner"
+              style={{ backgroundColor: `${activeNotification.color}15`, color: activeNotification.color }}
+            >
+              {activeNotification.icon ? activeNotification.icon : "⏰"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold text-blue-600 uppercase tracking-widest leading-none">Habit Alert</p>
+              <h5 className="text-sm font-black truncate mt-1 text-foreground/90">{activeNotification.name}</h5>
+              <p className="text-[10px] text-muted-foreground font-semibold mt-0.5 leading-none">Scheduled for {activeNotification.time}</p>
+            </div>
+            <button
+              onClick={() => setActiveNotification(null)}
+              className="text-muted-foreground/60 hover:text-foreground cursor-pointer transition-colors p-0.5 hover:bg-muted rounded-md"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                const todayStr = new Date().toISOString().split("T")[0]
+                dashboard.habitsHook.toggleHabitRecord(activeNotification.habitId, todayStr)
+                setActiveNotification(null)
+              }}
+              className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl cursor-pointer text-center transition-colors active:translate-y-px shadow-sm"
+            >
+              Mark Done
+            </button>
+            <button
+              onClick={() => setActiveNotification(null)}
+              className="flex-1 py-2 border border-border hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-black rounded-xl cursor-pointer text-center transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

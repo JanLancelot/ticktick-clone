@@ -13,7 +13,24 @@ export function useHabitsState(initialHabits: Habit[] = []) {
     localStorage.setItem("zoc_habits", JSON.stringify(updatedHabits))
   }, [])
 
-  const addHabit = useCallback(async (name: string, color: string) => {
+  const addHabit = useCallback(async (
+    name: string,
+    color: string,
+    icon?: string | null,
+    frequency?: "DAILY" | "WEEKLY" | "MONTHLY",
+    repeatDays?: number[],
+    goal?: number,
+    unit?: string | null,
+    reminderTime?: string | null,
+    startDate?: string | null,
+    goalDays?: string | null,
+    section?: string | null,
+    goalType?: string | null,
+    checkingMode?: string | null,
+    recordCount?: number | null,
+    frequencyType?: string | null,
+    frequencyValue?: number | null
+  ) => {
     if (!name.trim()) return
 
     const tempId = Date.now().toString()
@@ -23,12 +40,43 @@ export function useHabitsState(initialHabits: Habit[] = []) {
       color,
       streak: 0,
       records: {},
+      icon: icon || null,
+      frequency: frequency || "DAILY",
+      repeatDays: repeatDays || [],
+      goal: goal || 1,
+      unit: unit || null,
+      reminderTime: reminderTime || null,
+      startDate: startDate || new Date().toISOString().split("T")[0],
+      goalDays: goalDays || "Forever",
+      section: section || "Others",
+      goalType: goalType || "all",
+      checkingMode: checkingMode || "auto",
+      recordCount: recordCount || 1,
+      frequencyType: frequencyType || "daily",
+      frequencyValue: frequencyValue || 1,
     }
 
-    const currentHabits = [...habits, newH]
+    const currentHabits = [newH, ...habits]
     saveHabits(currentHabits)
 
-    const res = await createHabitAction(newH.name, newH.color)
+    const res = await createHabitAction(
+      newH.name,
+      newH.color,
+      newH.icon,
+      newH.frequency,
+      newH.repeatDays,
+      newH.goal,
+      newH.unit,
+      newH.reminderTime,
+      newH.startDate,
+      newH.goalDays,
+      newH.section,
+      newH.goalType,
+      newH.checkingMode,
+      newH.recordCount,
+      newH.frequencyType,
+      newH.frequencyValue
+    )
     if (res.success && res.habitId) {
       setHabits((prev) => {
         const updated = prev.map((h) => (h.id === tempId ? { ...h, id: res.habitId! } : h))
@@ -36,6 +84,30 @@ export function useHabitsState(initialHabits: Habit[] = []) {
         return updated
       })
     }
+  }, [habits, saveHabits])
+
+  const editHabit = useCallback(async (
+    habitId: string,
+    updates: Partial<Omit<Habit, "id" | "records" | "streak">>
+  ) => {
+    const updated = habits.map((h) => {
+      if (h.id === habitId) {
+        return { ...h, ...updates }
+      }
+      return h
+    })
+    saveHabits(updated)
+
+    const { updateHabitAction } = await import("@/src/app/actions")
+    await updateHabitAction(habitId, updates)
+  }, [habits, saveHabits])
+
+  const deleteHabit = useCallback(async (habitId: string) => {
+    const updated = habits.filter((h) => h.id !== habitId)
+    saveHabits(updated)
+
+    const { deleteHabitAction } = await import("@/src/app/actions")
+    await deleteHabitAction(habitId)
   }, [habits, saveHabits])
 
   const toggleHabitRecord = useCallback(async (habitId: string, dateStr: string) => {
@@ -91,6 +163,8 @@ export function useHabitsState(initialHabits: Habit[] = []) {
     showAddHabit,
     setShowAddHabit,
     addHabit,
+    editHabit,
+    deleteHabit,
     toggleHabitRecord,
   }
 }

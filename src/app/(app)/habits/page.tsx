@@ -14,6 +14,7 @@ export default function HabitsPage() {
       setShowAddHabit={habitsHook.setShowAddHabit}
       onAddHabit={habitsHook.addHabit}
       onToggleRecord={habitsHook.toggleHabitRecord}
+      onDeleteHabit={habitsHook.deleteHabit}
     />
   )
 }

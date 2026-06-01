@@ -112,6 +112,20 @@ export async function getDashboardData() {
         color: h.color || "#10b981",
         streak: h.goal, // mapping goal/streak representation
         records,
+        icon: h.icon,
+        frequency: h.frequency,
+        repeatDays: h.repeatDays,
+        goal: h.goal,
+        reminderTime: h.reminderTime,
+        startDate: h.startDate ? h.startDate.toISOString().split("T")[0] : undefined,
+        unit: h.unit,
+        goalDays: h.goalDays,
+        section: h.section,
+        goalType: h.goalType,
+        checkingMode: h.checkingMode,
+        recordCount: h.recordCount,
+        frequencyType: h.frequencyType,
+        frequencyValue: h.frequencyValue,
       }
     })
 
@@ -297,7 +311,24 @@ export async function deleteProjectAction(projectId: string) {
 }
 
 // 6. Create a new habit
-export async function createHabitAction(name: string, color: string) {
+export async function createHabitAction(
+  name: string,
+  color: string,
+  icon?: string | null,
+  frequency?: "DAILY" | "WEEKLY" | "MONTHLY",
+  repeatDays?: number[],
+  goal?: number,
+  unit?: string | null,
+  reminderTime?: string | null,
+  startDate?: string | null,
+  goalDays?: string | null,
+  section?: string | null,
+  goalType?: string | null,
+  checkingMode?: string | null,
+  recordCount?: number | null,
+  frequencyType?: string | null,
+  frequencyValue?: number | null
+) {
   const session = await getSession()
   if (!session) return { success: false, error: "UNAUTHORIZED" }
 
@@ -307,12 +338,99 @@ export async function createHabitAction(name: string, color: string) {
       data: {
         name,
         color,
+        icon: icon || null,
+        frequency: (frequency as any) || "DAILY",
+        repeatDays: repeatDays || [],
+        goal: goal || 1,
+        unit: unit || null,
+        reminderTime: reminderTime || null,
+        startDate: startDate ? new Date(startDate) : new Date(),
+        goalDays: goalDays || "Forever",
+        section: section || "Others",
+        goalType: goalType || "all",
+        checkingMode: checkingMode || "auto",
+        recordCount: recordCount || 1,
+        frequencyType: frequencyType || "daily",
+        frequencyValue: frequencyValue || 1,
         userId,
       },
     })
     return { success: true, habitId: habit.id }
   } catch (error: any) {
     console.error("Database error in createHabitAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 6b. Update an existing habit
+export async function updateHabitAction(
+  habitId: string,
+  updates: {
+    name?: string
+    color?: string
+    icon?: string | null
+    frequency?: "DAILY" | "WEEKLY" | "MONTHLY"
+    repeatDays?: number[]
+    goal?: number
+    unit?: string | null
+    reminderTime?: string | null
+    startDate?: string | null
+    goalDays?: string | null
+    section?: string | null
+    goalType?: string | null
+    checkingMode?: string | null
+    recordCount?: number | null
+    frequencyType?: string | null
+    frequencyValue?: number | null
+  }
+) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const data: any = {}
+    if (updates.name !== undefined) data.name = updates.name
+    if (updates.color !== undefined) data.color = updates.color
+    if (updates.icon !== undefined) data.icon = updates.icon
+    if (updates.frequency !== undefined) data.frequency = updates.frequency
+    if (updates.repeatDays !== undefined) data.repeatDays = updates.repeatDays
+    if (updates.goal !== undefined) data.goal = updates.goal
+    if (updates.unit !== undefined) data.unit = updates.unit
+    if (updates.reminderTime !== undefined) data.reminderTime = updates.reminderTime
+    if (updates.startDate !== undefined) {
+      data.startDate = updates.startDate ? new Date(updates.startDate) : new Date()
+    }
+    if (updates.goalDays !== undefined) data.goalDays = updates.goalDays
+    if (updates.section !== undefined) data.section = updates.section
+    if (updates.goalType !== undefined) data.goalType = updates.goalType
+    if (updates.checkingMode !== undefined) data.checkingMode = updates.checkingMode
+    if (updates.recordCount !== undefined) data.recordCount = updates.recordCount
+    if (updates.frequencyType !== undefined) data.frequencyType = updates.frequencyType
+    if (updates.frequencyValue !== undefined) data.frequencyValue = updates.frequencyValue
+
+    await prisma.habit.update({
+      where: { id: habitId },
+      data,
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in updateHabitAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 6c. Delete a habit
+export async function deleteHabitAction(habitId: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    await prisma.habit.delete({
+      where: { id: habitId },
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in deleteHabitAction:", error)
     return { success: false, error: "DATABASE_UNAVAILABLE" }
   }
 }

@@ -280,6 +280,14 @@ model Habit {
   reminderTime String? // "HH:mm" local time
   startDate    DateTime       @default(now()) @db.Date
 
+  goalDays     String?        @default("Forever")
+  section      String?        @default("Others")
+  goalType     String?        @default("all")
+  checkingMode String?        @default("auto")
+  recordCount  Int?           @default(1)
+  frequencyType String?       @default("daily")
+  frequencyValue Int?          @default(1)
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
