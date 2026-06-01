@@ -208,7 +208,7 @@ export function DashboardProvider({
       )
     }
 
-    let filtered = [...tasksHook.tasks]
+    let filtered = tasksHook.tasks.filter((t) => !t.parentId)
 
     // Apply main view filter (if not viewing habits or focus or calendar pages)
     if (showOnlyCompleted) {

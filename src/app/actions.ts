@@ -87,6 +87,7 @@ export async function getDashboardData() {
       tags: t.tags.map((tt) => tt.tag.name),
       content: t.content,
       sortOrder: t.sortOrder,
+      parentId: t.parentId,
     }))
 
     // Transform database projects to client format
@@ -176,7 +177,8 @@ export async function createTaskAction(
   priority: "NONE" | "LOW" | "MEDIUM" | "HIGH",
   dueDateStr: string | null,
   projectId: string | null,
-  tagStr: string | null
+  tagStr: string | null,
+  parentId: string | null = null
 ) {
   const session = await getSession()
   if (!session) return { success: false, error: "UNAUTHORIZED" }
@@ -211,6 +213,7 @@ export async function createTaskAction(
         dueDate: dueDateStr ? new Date(dueDateStr) : null,
         projectId: targetProjectId,
         status: "NORMAL",
+        parentId: parentId || null,
       },
     })
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Task } from "../types"
 import { TaskItem } from "./TaskItem"
 import { useDashboard, SortOption, GroupOption } from "@/src/components/dashboard/DashboardContext"
@@ -17,8 +17,11 @@ import {
   Ban,
   Check,
   List,
-  Columns3
+  Columns3,
+  Trash2
 } from "lucide-react"
+import { AnimatedCheckbox } from "@/components/ui/AnimatedCheckbox"
+import { useCelebration } from "@/components/ui/CelebrationContext"
 
 interface Project {
   id: string
@@ -62,6 +65,58 @@ export function TasksList({
   const [completedExpanded, setCompletedExpanded] = useState(true)
   const [groupOpen, setGroupOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
+  const { triggerCelebration } = useCelebration()
+
+  const renderSubtasksForList = (parentTask: Task) => {
+    const taskSubtasks = tasksHook.tasks.filter((t) => t.parentId === parentTask.id)
+    if (taskSubtasks.length === 0) return null
+
+    return (
+      <div className="pl-9 pr-2 py-0.5 space-y-1.5 border-l-2 border-dashed border-border/60 ml-6 animate-fade-in duration-200">
+        {taskSubtasks.map((subtask) => (
+          <div
+            key={subtask.id}
+            onClick={() => onRowClick && onRowClick(parentTask.id)}
+            className={`flex items-center justify-between p-2.5 rounded-xl border border-border/40 bg-card hover:bg-muted/10 transition-all group/sub cursor-pointer ${
+              subtask.completed ? "opacity-60" : ""
+            }`}
+          >
+            <div className="flex items-center gap-3 min-w-0 w-full">
+              <AnimatedCheckbox
+                completed={subtask.completed}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!subtask.completed) {
+                    triggerCelebration(e.clientX, e.clientY)
+                  }
+                  onToggle(subtask.id)
+                }}
+                priority="NONE"
+              />
+              <span
+                className={`text-[11px] font-semibold truncate ${
+                  subtask.completed ? "text-muted-foreground line-through" : "text-foreground"
+                }`}
+              >
+                {subtask.title}
+              </span>
+            </div>
+            
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(subtask.id)
+              }}
+              title="Delete Subtask"
+              className="opacity-0 group-hover/sub:opacity-100 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all shrink-0 cursor-pointer"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   // 1. Sorting Logic
   const sortTasks = (taskList: Task[], sortOpt: SortOption): Task[] => {
@@ -226,9 +281,11 @@ export function TasksList({
 
   // 3. Process Active Tasks
   let processedActiveElements: React.ReactNode = null
-  const sortedActive = sortTasks(activeTasks, sortBy)
+  const sortedActive = useMemo(() => {
+    return sortTasks(activeTasks, sortBy)
+  }, [activeTasks, sortBy])
 
-  const getVisualTasks = (): Task[] => {
+  const currentVisualTasks = useMemo(() => {
     if (groupBy === "none") {
       return sortedActive
     }
@@ -237,9 +294,7 @@ export function TasksList({
       group.tasks = sortTasks(group.tasks, sortBy)
     })
     return activeGroups.flatMap((g) => g.tasks)
-  }
-
-  const currentVisualTasks = getVisualTasks()
+  }, [activeTasks, sortedActive, groupBy, sortBy])
 
   const canDrag = sortBy !== "title" && !isTrash
 
@@ -399,7 +454,7 @@ export function TasksList({
             onDragOver={handleDragOver}
             onDragEnter={(e) => handleDragEnter(e, index)}
             onDragEnd={handleDragEnd}
-            className={`transition-all duration-250 ${
+            className={`transition-all duration-250 space-y-1.5 ${
               draggedTaskId === task.id
                 ? "opacity-30 scale-[0.98] border border-dashed border-primary/30 rounded-xl"
                 : ""
@@ -416,6 +471,7 @@ export function TasksList({
               onRowClick={onRowClick}
               isDraggable={canDrag}
             />
+            {renderSubtasksForList(task)}
           </div>
         ))}
       </div>
@@ -447,7 +503,7 @@ export function TasksList({
                     onDragOver={handleDragOver}
                     onDragEnter={(e) => handleDragEnter(e, taskIndex !== -1 ? taskIndex : 0)}
                     onDragEnd={handleDragEnd}
-                    className={`transition-all duration-250 ${
+                    className={`transition-all duration-250 space-y-1.5 ${
                       draggedTaskId === task.id
                         ? "opacity-30 scale-[0.98] border border-dashed border-primary/30 rounded-xl"
                         : ""
@@ -464,6 +520,7 @@ export function TasksList({
                       onRowClick={onRowClick}
                       isDraggable={canDrag}
                     />
+                    {renderSubtasksForList(task)}
                   </div>
                 )
               })}
@@ -475,7 +532,9 @@ export function TasksList({
   }
 
   // 4. Process Completed Tasks (always flat list, sorted by current sortBy)
-  const sortedCompleted = sortTasks(completedTasks, sortBy)
+  const sortedCompleted = useMemo(() => {
+    return sortTasks(completedTasks, sortBy)
+  }, [completedTasks, sortBy])
 
   // 5. Dropdown Labels and Icons helpers
   const getSortDetails = (opt: SortOption) => {
@@ -679,15 +738,17 @@ export function TasksList({
           {completedExpanded && (
             <div className="space-y-2 animate-fade-in duration-200">
               {sortedCompleted.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  projects={projects}
-                  onToggle={onToggle}
-                  onDelete={onDelete}
-                  isRowSelected={activeSelectedTaskId === task.id}
-                  onRowClick={onRowClick}
-                />
+                <div key={task.id} className="space-y-1.5">
+                  <TaskItem
+                    task={task}
+                    projects={projects}
+                    onToggle={onToggle}
+                    onDelete={onDelete}
+                    isRowSelected={activeSelectedTaskId === task.id}
+                    onRowClick={onRowClick}
+                  />
+                  {renderSubtasksForList(task)}
+                </div>
               ))}
             </div>
           )}

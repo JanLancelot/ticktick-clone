@@ -16,7 +16,8 @@ export function useTasksState(initialTasks: Task[] = []) {
     priority: "NONE" | "LOW" | "MEDIUM" | "HIGH" = "NONE",
     dueDate: string | null = null,
     projectId: string = "inbox",
-    tagStr: string = ""
+    tagStr: string = "",
+    parentId: string | null = null
   ) => {
     if (!title.trim()) return
 
@@ -29,7 +30,8 @@ export function useTasksState(initialTasks: Task[] = []) {
       dueDate: dueDate || null,
       projectId: projectId || "inbox",
       tags: tagStr.trim() ? [tagStr.trim().toLowerCase()] : [],
-      sortOrder: 0
+      sortOrder: 0,
+      parentId: parentId || null
     }
 
     const currentTasks = [...tasks, tempTask]
@@ -40,7 +42,8 @@ export function useTasksState(initialTasks: Task[] = []) {
       tempTask.priority,
       tempTask.dueDate,
       tempTask.projectId,
-      tagStr.trim() || null
+      tagStr.trim() || null,
+      parentId || null
     )
 
     if (res.success && res.taskId) {
