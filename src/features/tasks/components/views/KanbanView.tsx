@@ -23,7 +23,8 @@ import {
   FileText,
   List,
   Columns3,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Search
 } from "lucide-react"
 
 interface Project {
@@ -74,7 +75,11 @@ export function KanbanView({
     isLoading,
     tasksHook,
     updateTask,
-    activeTab
+    activeTab,
+    searchQuery,
+    setSearchQuery,
+    showSearchInput,
+    setShowSearchInput
   } = useDashboard()
   const { triggerCelebration } = useCelebration()
 
@@ -667,6 +672,46 @@ export function KanbanView({
                   })}
                 </div>
               </>
+            )}
+          </div>
+
+          {/* Search Toggle Button / Input */}
+          <div className="relative flex items-center">
+            {showSearchInput ? (
+              <div className="relative flex items-center animate-fade-in">
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-8 pl-8 pr-8 text-[11px] bg-card rounded-xl border border-border focus:outline-none w-40 sm:w-48 font-bold shadow-3xs"
+                  autoFocus
+                />
+                <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                {searchQuery ? (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 text-muted-foreground hover:text-foreground text-[10px] font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowSearchInput(false)}
+                    className="absolute right-2.5 text-muted-foreground hover:text-foreground text-[10px] font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowSearchInput(true)}
+                className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-3xs h-8 w-8"
+                title="Search Tasks"
+              >
+                <Search className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
         </div>

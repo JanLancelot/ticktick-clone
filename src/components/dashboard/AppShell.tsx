@@ -290,21 +290,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="absolute left-0 w-1 h-5 rounded-r-md bg-primary-foreground" />
                 )}
               </button>
-
-              <div className="w-6 h-px bg-border/80 my-1" />
-
-              <button
-                onClick={() => {
-                  router.push("/")
-                  setShowSearchInput((prev) => !prev)
-                }}
-                title="Search Tasks"
-                className={`h-10 w-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
-                  showSearchInput || searchQuery ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <Search className="h-5 w-5" />
-              </button>
             </div>
           </div>
 
@@ -687,64 +672,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </p>
           </div>
 
-          {/* Quick Metrics & Search */}
-          {activeModule === "tasks" && (
+          {/* Quick Metrics */}
+          {activeModule === "tasks" && !showTrash && (
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 min-w-[200px]">
-              {showSearchInput && (
-                <div className="relative shrink-0 w-full sm:w-44 animate-fade-in">
-                  <input
-                    type="text"
-                    placeholder="Search tasks..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-9 w-full pl-3 pr-8 text-xs bg-background rounded-xl border border-border focus:outline-none"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-2.5 top-2 text-muted-foreground hover:text-foreground text-[10px] font-bold"
-                    >
-                      ✕
-                    </button>
-                  )}
+              <div className="bg-background/80 border border-border/80 p-3.5 rounded-xl flex items-center gap-4 shadow-2xs backdrop-blur-xs select-none flex-1">
+                <div className="relative h-11 w-11 shrink-0 flex items-center justify-center">
+                  <svg className="w-full h-full transform -rotate-90">
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      fill="transparent"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      className="text-muted/30"
+                    />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      fill="transparent"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      className="text-primary transition-all duration-300"
+                      strokeDasharray={2 * Math.PI * 18}
+                      strokeDashoffset={2 * Math.PI * 18 * (1 - completedPercentage / 100)}
+                    />
+                  </svg>
+                  <span className="absolute text-[9px] font-black">{completedPercentage}%</span>
                 </div>
-              )}
-
-              {!showTrash && (
-                <div className="bg-background/80 border border-border/80 p-3.5 rounded-xl flex items-center gap-4 shadow-2xs backdrop-blur-xs select-none flex-1">
-                  <div className="relative h-11 w-11 shrink-0 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        fill="transparent"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        className="text-muted/30"
-                      />
-                      <circle
-                        cx="22"
-                        cy="22"
-                        r="18"
-                        fill="transparent"
-                        stroke="currentColor"
-                        strokeWidth="3.5"
-                        className="text-primary transition-all duration-300"
-                        strokeDasharray={2 * Math.PI * 18}
-                        strokeDashoffset={2 * Math.PI * 18 * (1 - completedPercentage / 100)}
-                      />
-                    </svg>
-                    <span className="absolute text-[9px] font-black">{completedPercentage}%</span>
-                  </div>
-                  <div className="text-xs min-w-0">
-                    <p className="font-extrabold text-foreground leading-tight">Focus Progress</p>
-                    <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
-                      {completedFiltered.length}/{totalFilteredCount} tasks done
-                    </p>
-                  </div>
+                <div className="text-xs min-w-0">
+                  <p className="font-extrabold text-foreground leading-tight">Focus Progress</p>
+                  <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
+                    {completedFiltered.length}/{totalFilteredCount} tasks done
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
