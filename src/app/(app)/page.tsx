@@ -18,6 +18,7 @@ export default function TasksPage() {
     setSelectedTaskId,
     updateTask,
     showTrash,
+    showOnlyCompleted,
     viewMode,
   } = useDashboard()
 
@@ -27,7 +28,7 @@ export default function TasksPage() {
     <div className="flex flex-col lg:flex-row gap-6 items-start h-full w-full">
       {/* Left Column: Tasks Board */}
       <div className="flex-1 space-y-6 w-full">
-        {!showTrash && viewMode === "list" && (
+        {!showTrash && !showOnlyCompleted && viewMode === "list" && (
           <TaskAdder
             projects={projectsHook.projects}
             activeTab={activeTab}
@@ -40,7 +41,7 @@ export default function TasksPage() {
           />
         )}
 
-        {viewMode === "list" ? (
+        {viewMode === "list" || showTrash ? (
           <TasksList
             activeTasks={activeFiltered}
             completedTasks={completedFiltered}

@@ -310,6 +310,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Bottom control buttons */}
           <div className="flex flex-col gap-4 items-center w-full">
+
             <button
               onClick={() => {
                 alert("✨ Syncing database data...")
@@ -709,39 +710,41 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
               )}
 
-              <div className="bg-background/80 border border-border/80 p-3.5 rounded-xl flex items-center gap-4 shadow-2xs backdrop-blur-xs select-none flex-1">
-                <div className="relative h-11 w-11 shrink-0 flex items-center justify-center">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      fill="transparent"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      className="text-muted/30"
-                    />
-                    <circle
-                      cx="22"
-                      cy="22"
-                      r="18"
-                      fill="transparent"
-                      stroke="currentColor"
-                      strokeWidth="3.5"
-                      className="text-primary transition-all duration-300"
-                      strokeDasharray={2 * Math.PI * 18}
-                      strokeDashoffset={2 * Math.PI * 18 * (1 - completedPercentage / 100)}
-                    />
-                  </svg>
-                  <span className="absolute text-[9px] font-black">{completedPercentage}%</span>
+              {!showTrash && (
+                <div className="bg-background/80 border border-border/80 p-3.5 rounded-xl flex items-center gap-4 shadow-2xs backdrop-blur-xs select-none flex-1">
+                  <div className="relative h-11 w-11 shrink-0 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        fill="transparent"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        className="text-muted/30"
+                      />
+                      <circle
+                        cx="22"
+                        cy="22"
+                        r="18"
+                        fill="transparent"
+                        stroke="currentColor"
+                        strokeWidth="3.5"
+                        className="text-primary transition-all duration-300"
+                        strokeDasharray={2 * Math.PI * 18}
+                        strokeDashoffset={2 * Math.PI * 18 * (1 - completedPercentage / 100)}
+                      />
+                    </svg>
+                    <span className="absolute text-[9px] font-black">{completedPercentage}%</span>
+                  </div>
+                  <div className="text-xs min-w-0">
+                    <p className="font-extrabold text-foreground leading-tight">Focus Progress</p>
+                    <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
+                      {completedFiltered.length}/{totalFilteredCount} tasks done
+                    </p>
+                  </div>
                 </div>
-                <div className="text-xs min-w-0">
-                  <p className="font-extrabold text-foreground leading-tight">Focus Progress</p>
-                  <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
-                    {completedFiltered.length}/{totalFilteredCount} tasks done
-                  </p>
-                </div>
-              </div>
+              )}
             </div>
           )}
 

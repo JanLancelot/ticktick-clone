@@ -6,6 +6,11 @@ export function useTasksState(initialTasks: Task[] = []) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [deletedTasks, setDeletedTasks] = useState<Task[]>([])
 
+  const saveDeletedTasks = useCallback((updatedDeleted: Task[]) => {
+    setDeletedTasks(updatedDeleted)
+    localStorage.setItem("zoc_deleted_tasks", JSON.stringify(updatedDeleted))
+  }, [])
+
   const saveTasks = useCallback((updatedTasks: Task[]) => {
     setTasks(updatedTasks)
     localStorage.setItem("zoc_tasks", JSON.stringify(updatedTasks))
@@ -60,7 +65,11 @@ export function useTasksState(initialTasks: Task[] = []) {
     const updated = tasks.map(t => {
       if (t.id === taskId) {
         isCompleted = !t.completed
-        return { ...t, completed: isCompleted }
+        return {
+          ...t,
+          completed: isCompleted,
+          completedAt: isCompleted ? new Date().toISOString() : null
+        }
       }
       return t
     })
@@ -72,13 +81,14 @@ export function useTasksState(initialTasks: Task[] = []) {
   const deleteTask = useCallback(async (taskId: string) => {
     const taskToDelete = tasks.find(t => t.id === taskId)
     if (taskToDelete) {
-      setDeletedTasks(prev => [...prev, taskToDelete])
+      const newDeleted = [...deletedTasks, taskToDelete]
+      saveDeletedTasks(newDeleted)
     }
     const updated = tasks.filter(t => t.id !== taskId)
     saveTasks(updated)
 
     await deleteTaskAction(taskId)
-  }, [tasks, saveTasks])
+  }, [tasks, deletedTasks, saveTasks, saveDeletedTasks])
 
   const reorderTasks = useCallback(async (orderedIds: string[]) => {
     const reorderedSet = new Set(orderedIds)
@@ -160,6 +170,10 @@ export function useTasksState(initialTasks: Task[] = []) {
     }
   }, [tasks, saveTasks])
 
+  const clearDeletedTasks = useCallback(() => {
+    saveDeletedTasks([])
+  }, [saveDeletedTasks])
+
   return {
     tasks,
     setTasks,
@@ -170,6 +184,7 @@ export function useTasksState(initialTasks: Task[] = []) {
     toggleTaskCompletion,
     deleteTask,
     reorderTasks,
-    reorderAndUpdateTask
+    reorderAndUpdateTask,
+    clearDeletedTasks
   }
 }

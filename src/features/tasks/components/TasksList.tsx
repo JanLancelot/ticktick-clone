@@ -61,10 +61,12 @@ export function TasksList({
   onRowClick,
   isTrash = false,
 }: TasksListProps) {
-  const { sortBy, setSortBy, groupBy, setGroupBy, viewMode, setViewMode, isLoading, tasksHook } = useDashboard()
+  const { sortBy, setSortBy, groupBy, setGroupBy, viewMode, setViewMode, isLoading, tasksHook, showOnlyCompleted } = useDashboard()
   const [completedExpanded, setCompletedExpanded] = useState(true)
   const [groupOpen, setGroupOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
+  const [completedDateFilter, setCompletedDateFilter] = useState<string>("all")
+  const [completedListFilter, setCompletedListFilter] = useState<string>("all")
   const { triggerCelebration } = useCelebration()
 
   const renderSubtasksForList = (parentTask: Task) => {
@@ -116,6 +118,100 @@ export function TasksList({
         ))}
       </div>
     )
+  }
+
+  const getFilteredCompletedTasks = () => {
+    let filtered = [...completedTasks]
+
+    if (completedListFilter !== "all") {
+      filtered = filtered.filter((t) => t.projectId === completedListFilter)
+    }
+
+    if (completedDateFilter !== "all") {
+      const today = new Date()
+      const todayStr = today.toISOString().split("T")[0]
+      
+      const yesterday = new Date(today)
+      yesterday.setDate(today.getDate() - 1)
+      const yesterdayStr = yesterday.toISOString().split("T")[0]
+
+      const sevenDaysAgo = new Date(today)
+      sevenDaysAgo.setDate(today.getDate() - 7)
+      
+      const thirtyDaysAgo = new Date(today)
+      thirtyDaysAgo.setDate(today.getDate() - 30)
+
+      filtered = filtered.filter((t) => {
+        if (!t.completedAt) return false
+        const compDateStr = t.completedAt.split("T")[0]
+
+        if (completedDateFilter === "today") {
+          return compDateStr === todayStr
+        }
+        if (completedDateFilter === "yesterday") {
+          return compDateStr === yesterdayStr
+        }
+        if (completedDateFilter === "week") {
+          return new Date(t.completedAt) >= sevenDaysAgo
+        }
+        if (completedDateFilter === "month") {
+          return new Date(t.completedAt) >= thirtyDaysAgo
+        }
+        if (completedDateFilter === "year") {
+          return new Date(t.completedAt).getFullYear() === today.getFullYear()
+        }
+        return true
+      })
+    }
+
+    return filtered
+  }
+
+  const groupCompletedTasks = (list: Task[]): { dateLabel: string; tasks: Task[] }[] => {
+    const groupsMap: Record<string, Task[]> = {}
+
+    const sorted = [...list].sort((a, b) => {
+      const dateA = a.completedAt || ""
+      const dateB = b.completedAt || ""
+      return dateB.localeCompare(dateA)
+    })
+
+    sorted.forEach((task) => {
+      let dateStr = "No Date"
+      if (task.completedAt) {
+        const dateObj = new Date(task.completedAt)
+        const today = new Date()
+        const todayStr = today.toISOString().split("T")[0]
+        
+        const yesterday = new Date(today)
+        yesterday.setDate(today.getDate() - 1)
+        const yesterdayStr = yesterday.toISOString().split("T")[0]
+
+        const compDateStr = task.completedAt.split("T")[0]
+
+        if (compDateStr === todayStr) {
+          dateStr = "Today"
+        } else if (compDateStr === yesterdayStr) {
+          const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" })
+          dateStr = `Yesterday ${dayName}`
+        } else {
+          const monthName = dateObj.toLocaleDateString("en-US", { month: "short" })
+          const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" })
+          const dateNum = dateObj.getDate()
+          dateStr = `${monthName} ${dateNum} ${dayName}`
+        }
+      }
+
+      if (!groupsMap[dateStr]) {
+        groupsMap[dateStr] = []
+      }
+      groupsMap[dateStr].push(task)
+    })
+
+    return Object.keys(groupsMap).map((dateLabel) => ({
+      dateLabel,
+      tasks: groupsMap[dateLabel],
+    }))
   }
 
   // 1. Sorting Logic
@@ -557,6 +653,91 @@ export function TasksList({
     }
   }
 
+  if (showOnlyCompleted) {
+    const filteredCompleted = getFilteredCompletedTasks()
+    const groupedCompleted = groupCompletedTasks(filteredCompleted)
+
+    return (
+      <div className="space-y-6 animate-fade-in duration-200">
+        {/* Dropdown selectors */}
+        <div className="flex flex-wrap gap-2.5 pb-2 select-none">
+          {/* Date Selector */}
+          <select
+            value={completedDateFilter}
+            onChange={(e) => setCompletedDateFilter(e.target.value)}
+            className="px-3.5 py-1.5 rounded-xl border border-border bg-card text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none focus:ring-0 focus-visible:ring-0 shadow-3xs"
+          >
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+            <option value="year">This Year</option>
+          </select>
+
+          {/* List Selector */}
+          <select
+            value={completedListFilter}
+            onChange={(e) => setCompletedListFilter(e.target.value)}
+            className="px-3.5 py-1.5 rounded-xl border border-border bg-card text-[11px] font-bold text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none focus:ring-0 focus-visible:ring-0 shadow-3xs"
+          >
+            <option value="all">All Lists</option>
+            <option value="inbox">Inbox</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Grouped Completed Tasks list */}
+        {groupedCompleted.length === 0 ? (
+          <div className="text-center py-12 bg-card border border-border border-dashed rounded-2xl select-none">
+            <CheckCircle2 className="h-10 w-10 text-muted-foreground/35 mx-auto mb-3" />
+            <p className="text-sm font-bold text-muted-foreground">
+              No completed tasks found
+            </p>
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Try adjusting your filter options or complete some tasks.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {groupedCompleted.map((group) => (
+              <div key={group.dateLabel} className="space-y-2.5">
+                <div className="flex items-center gap-2 px-1 select-none">
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/65 shrink-0" />
+                  <h4 className="text-[11px] font-extrabold text-foreground leading-none">
+                    {group.dateLabel}
+                  </h4>
+                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                    {group.tasks.length}
+                  </span>
+                </div>
+                <div className="space-y-2 pl-3 border-l border-border/60 ml-2.5">
+                  {group.tasks.map((task) => (
+                    <div key={task.id} className="space-y-1.5">
+                      <TaskItem
+                        task={task}
+                        projects={projects}
+                        onToggle={onToggle}
+                        onDelete={onDelete}
+                        isRowSelected={activeSelectedTaskId === task.id}
+                        onRowClick={onRowClick}
+                      />
+                      {renderSubtasksForList(task)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const activeSort = getSortDetails(sortBy)
   const activeGroup = getGroupDetails(groupBy)
 
@@ -709,12 +890,27 @@ export function TasksList({
           <h3 className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
             {isTrash ? `Trash Tasks (${activeTasks.length})` : `Active Tasks (${activeTasks.length})`}
           </h3>
-          {isLoading && activeTasks.length > 0 && (
-            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary/75 tracking-wider bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 animate-pulse">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping shrink-0" />
-              <span>Syncing...</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {isLoading && activeTasks.length > 0 && (
+              <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-primary/75 tracking-wider bg-primary/5 px-2 py-0.5 rounded-full border border-primary/10 animate-pulse">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-ping shrink-0" />
+                <span>Syncing...</span>
+              </div>
+            )}
+            {isTrash && (
+              <button
+                onClick={() => {
+                  if (confirm("Are you sure you want to permanently delete all tasks in the trash? This action cannot be undone.")) {
+                    tasksHook.clearDeletedTasks()
+                  }
+                }}
+                title="Empty Trash Bin"
+                className="text-red-500 hover:text-red-600 hover:bg-red-500/10 p-1.5 rounded-md transition-all cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {processedActiveElements}

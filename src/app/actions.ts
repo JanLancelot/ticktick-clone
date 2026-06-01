@@ -88,6 +88,7 @@ export async function getDashboardData() {
       content: t.content,
       sortOrder: t.sortOrder,
       parentId: t.parentId,
+      completedAt: t.completedAt ? t.completedAt.toISOString() : null,
     }))
 
     // Transform database projects to client format

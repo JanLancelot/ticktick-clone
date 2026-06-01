@@ -9,5 +9,6 @@ export interface Task {
   content?: string | null // rich text / markdown notes
   sortOrder: number // Added to support custom sorting
   parentId?: string | null // Added to support subtasks
+  completedAt?: string | null // Added to support completion grouping/filtering
 }
 

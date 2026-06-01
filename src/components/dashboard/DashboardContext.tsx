@@ -147,6 +147,9 @@ export function DashboardProvider({
     const savedHabits = localStorage.getItem("zoc_habits")
     if (savedHabits) habitsHook.setHabits(JSON.parse(savedHabits))
 
+    const savedDeletedTasks = localStorage.getItem("zoc_deleted_tasks")
+    if (savedDeletedTasks) tasksHook.setDeletedTasks(JSON.parse(savedDeletedTasks))
+
     // 2. Fetch fresh updates from server in the background and update cache
     async function loadData() {
       const res = await getDashboardData()
