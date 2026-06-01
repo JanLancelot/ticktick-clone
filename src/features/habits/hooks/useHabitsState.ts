@@ -111,16 +111,34 @@ export function useHabitsState(initialHabits: Habit[] = []) {
   }, [habits, saveHabits])
 
   const toggleHabitRecord = useCallback(async (habitId: string, dateStr: string) => {
-    let isDone = false
+    let nextVal = 0
     const todayStr = new Date().toISOString().split("T")[0]
+
+    const isCompleted = (val: number, habitItem: Habit) => {
+      if (habitItem.goalType === "amount") {
+        return val >= (habitItem.goal || 1)
+      }
+      return val > 0
+    }
 
     const updated = habits.map((h) => {
       if (h.id === habitId) {
-        const currentStatus = h.records[dateStr] || false
-        const nextStatus = !currentStatus
-        isDone = nextStatus
+        const currentVal = h.records[dateStr] || 0
+        
+        if (h.goalType === "amount") {
+          const targetGoal = h.goal || 1
+          const step = h.recordCount || 1
+          if (currentVal >= targetGoal) {
+            nextVal = 0
+          } else {
+            nextVal = currentVal + step
+          }
+        } else {
+          // goalType === "all"
+          nextVal = currentVal > 0 ? 0 : 1
+        }
 
-        const newRecords = { ...h.records, [dateStr]: nextStatus }
+        const newRecords = { ...h.records, [dateStr]: nextVal }
 
         // Calculate new streak
         let streak = 0
@@ -128,14 +146,16 @@ export function useHabitsState(initialHabits: Habit[] = []) {
 
         while (true) {
           const checkDateStr = checkDate.toISOString().split("T")[0]
-          if (newRecords[checkDateStr]) {
+          const dayVal = newRecords[checkDateStr] || 0
+          if (isCompleted(dayVal, h)) {
             streak++
             checkDate.setDate(checkDate.getDate() - 1)
           } else {
             if (checkDateStr === todayStr) {
               checkDate.setDate(checkDate.getDate() - 1)
               const yesterdayStr = checkDate.toISOString().split("T")[0]
-              if (newRecords[yesterdayStr]) {
+              const yesterdayVal = newRecords[yesterdayStr] || 0
+              if (isCompleted(yesterdayVal, h)) {
                 checkDate.setDate(checkDate.getDate() - 1)
                 continue
               }
@@ -150,7 +170,7 @@ export function useHabitsState(initialHabits: Habit[] = []) {
     })
 
     saveHabits(updated)
-    await toggleHabitRecordAction(habitId, dateStr, isDone)
+    await toggleHabitRecordAction(habitId, dateStr, nextVal)
   }, [habits, saveHabits])
 
   return {

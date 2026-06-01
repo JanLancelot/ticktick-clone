@@ -13,7 +13,8 @@ export function HabitCard({ habit, onToggleRecord, onDeleteHabit, onEditHabit }:
   const getTodayDateString = () => new Date().toISOString().split("T")[0]
 
   const todayStr = getTodayDateString()
-  const isDoneToday = habit.records[todayStr] || false
+  const todayVal = habit.records[todayStr] || 0
+  const isDoneToday = habit.goalType === "amount" ? todayVal >= (habit.goal || 1) : todayVal > 0
 
   // Last 5 days record row
   const pastDays = []
@@ -125,9 +126,18 @@ export function HabitCard({ habit, onToggleRecord, onDeleteHabit, onEditHabit }:
         <div className="flex justify-between items-center bg-muted/10 p-2.5 rounded-xl border border-border/40 select-none">
           {pastDays.map((day, idx) => {
             const dateStr = day.toISOString().split("T")[0]
-            const isDayDone = habit.records[dateStr] || false
+            const val = habit.records[dateStr] || 0
+            const goal = habit.goal || 1
+            const isFullyCompleted = habit.goalType === "amount" ? val >= goal : val > 0
+            const isPartiallyCompleted = habit.goalType === "amount" && val > 0 && val < goal
             const dayLabel = day.toLocaleDateString("en-US", { weekday: "narrow" })
             const isToday = dateStr === todayStr
+
+            // Circular progress ring parameters
+            const radius = 11
+            const circumference = 2 * Math.PI * radius
+            const percent = Math.min(1, val / goal)
+            const strokeDashoffset = circumference * (1 - percent)
 
             return (
               <button
@@ -138,15 +148,50 @@ export function HabitCard({ habit, onToggleRecord, onDeleteHabit, onEditHabit }:
                 <span className={`text-[9px] font-black ${isToday ? "text-blue-600" : "text-muted-foreground/75"}`}>
                   {dayLabel}
                 </span>
-                <div
-                  className={`h-6.5 w-6.5 rounded-full flex items-center justify-center border transition-all ${
-                    isDayDone
-                      ? "border-transparent text-white scale-105 shadow-xs"
-                      : "bg-background border-border/80 group-hover:bg-muted"
-                  }`}
-                  style={{ backgroundColor: isDayDone ? habit.color : undefined }}
-                >
-                  {isDayDone && <Check className="h-3.5 w-3.5 stroke-[3px]" />}
+                <div className="relative h-7 w-7 flex items-center justify-center">
+                  {/* Circular progress SVG */}
+                  <svg className="absolute inset-0 h-full w-full -rotate-90 select-none pointer-events-none">
+                    {/* Track circle */}
+                    <circle
+                      cx="14"
+                      cy="14"
+                      r={radius}
+                      className="stroke-border/40 fill-none"
+                      strokeWidth="2"
+                    />
+                    {/* Progress circle */}
+                    {val > 0 && (
+                      <circle
+                        cx="14"
+                        cy="14"
+                        r={radius}
+                        className="fill-none transition-all duration-300 ease-out"
+                        stroke={habit.color || "#3b82f6"}
+                        strokeWidth="2.2"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                        strokeLinecap="round"
+                      />
+                    )}
+                  </svg>
+
+                  {/* Content inside the circular progress */}
+                  <div
+                    className={`h-5 w-5 rounded-full flex items-center justify-center text-[8.5px] font-black transition-all ${
+                      isFullyCompleted
+                        ? "text-white scale-105"
+                        : isPartiallyCompleted
+                        ? "text-foreground font-black"
+                        : "text-muted-foreground/20"
+                    }`}
+                    style={{
+                      backgroundColor: isFullyCompleted ? (habit.color || undefined) : undefined,
+                      color: isPartiallyCompleted ? (habit.color || undefined) : undefined,
+                    }}
+                  >
+                    {isFullyCompleted && <Check className="h-3 w-3 stroke-[3px]" />}
+                    {isPartiallyCompleted && <span>{val}</span>}
+                  </div>
                 </div>
               </button>
             )

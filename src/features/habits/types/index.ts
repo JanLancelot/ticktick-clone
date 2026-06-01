@@ -3,7 +3,7 @@ export interface Habit {
   name: string
   color: string
   streak: number
-  records: Record<string, boolean> // YYYY-MM-DD -> completed
+  records: Record<string, number> // YYYY-MM-DD -> progress value (0 or positive integer)
   icon?: string | null
   frequency?: "DAILY" | "WEEKLY" | "MONTHLY"
   repeatDays?: number[]

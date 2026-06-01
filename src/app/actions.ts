@@ -101,16 +101,47 @@ export async function getDashboardData() {
 
     // Transform database habits to client format
     const habits = dbHabits.map((h) => {
-      const records: Record<string, boolean> = {}
+      const records: Record<string, number> = {}
       h.records.forEach((r) => {
-        records[r.date.toISOString().split("T")[0]] = true
+        records[r.date.toISOString().split("T")[0]] = r.value
       })
+
+      // Calculate streak on backend
+      let streak = 0
+      const checkDate = new Date()
+      const recordMap = new Set(
+        h.records
+          .filter((r) => {
+            const isComp = h.goalType === "amount" ? r.value >= (h.goal || 1) : r.value > 0
+            return isComp
+          })
+          .map((r) => r.date.toISOString().split("T")[0])
+      )
+
+      const todayStr = new Date().toISOString().split("T")[0]
+      while (true) {
+        const checkDateStr = checkDate.toISOString().split("T")[0]
+        if (recordMap.has(checkDateStr)) {
+          streak++
+          checkDate.setDate(checkDate.getDate() - 1)
+        } else {
+          if (checkDateStr === todayStr) {
+            checkDate.setDate(checkDate.getDate() - 1)
+            const yesterdayStr = checkDate.toISOString().split("T")[0]
+            if (recordMap.has(yesterdayStr)) {
+              checkDate.setDate(checkDate.getDate() - 1)
+              continue
+            }
+          }
+          break
+        }
+      }
 
       return {
         id: h.id,
         name: h.name,
         color: h.color || "#10b981",
-        streak: h.goal, // mapping goal/streak representation
+        streak,
         records,
         icon: h.icon,
         frequency: h.frequency,
@@ -436,14 +467,14 @@ export async function deleteHabitAction(habitId: string) {
 }
 
 // 7. Toggle a habit log record
-export async function toggleHabitRecordAction(habitId: string, dateStr: string, completed: boolean) {
+export async function toggleHabitRecordAction(habitId: string, dateStr: string, value: number) {
   const session = await getSession()
   if (!session) return { success: false, error: "UNAUTHORIZED" }
 
   try {
     const recordDate = new Date(dateStr)
     
-    if (completed) {
+    if (value > 0) {
       await prisma.habitRecord.upsert({
         where: {
           habitId_date: {
@@ -454,19 +485,17 @@ export async function toggleHabitRecordAction(habitId: string, dateStr: string, 
         create: {
           habitId,
           date: recordDate,
-          value: 1,
+          value,
         },
         update: {
-          value: 1,
+          value,
         },
       })
     } else {
-      await prisma.habitRecord.delete({
+      await prisma.habitRecord.deleteMany({
         where: {
-          habitId_date: {
-            habitId,
-            date: recordDate,
-          },
+          habitId,
+          date: recordDate,
         },
       })
     }
