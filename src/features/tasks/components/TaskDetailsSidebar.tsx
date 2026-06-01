@@ -5,6 +5,7 @@ import { AnimatedCheckbox } from "@/components/ui/AnimatedCheckbox"
 import { useCelebration } from "@/components/ui/CelebrationContext"
 import { PriorityDropdown, type Priority } from "@/components/ui/PriorityDropdown"
 import { ListDropdown, type ListProject } from "@/components/ui/ListDropdown"
+import { SectionDropdown } from "@/components/ui/SectionDropdown"
 import { CalendarDropdown } from "@/components/ui/CalendarDropdown"
 import { useDashboard } from "@/src/components/dashboard/DashboardContext"
 
@@ -26,6 +27,7 @@ interface TaskDetailsSidebarProps {
       priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
       dueDate?: string | null
       projectId?: string | null
+      sectionId?: string | null
     }
   ) => Promise<void> | void
   onToggleComplete: (taskId: string) => void
@@ -40,12 +42,13 @@ export function TaskDetailsSidebar({
   onClose,
 }: TaskDetailsSidebarProps) {
   const { triggerCelebration } = useCelebration()
-  const { tasksHook } = useDashboard()
+  const { tasksHook, sections } = useDashboard()
   const [title, setTitle] = useState(task.title)
   const [content, setContent] = useState(task.content || "")
   const [dueDate, setDueDate] = useState(task.dueDate || "")
   const [priority, setPriority] = useState<Priority>(task.priority)
   const [projectId, setProjectId] = useState(task.projectId)
+  const [sectionId, setSectionId] = useState(task.sectionId)
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("")
   const [localSubtasks, setLocalSubtasks] = useState<Task[]>([])
   const [draggedSubtaskId, setDraggedSubtaskId] = useState<string | null>(null)
@@ -105,6 +108,7 @@ export function TaskDetailsSidebar({
     setDueDate(task.dueDate || "")
     setPriority(task.priority)
     setProjectId(task.projectId)
+    setSectionId(task.sectionId)
   }, [task])
 
   const handleTitleBlur = () => {
@@ -131,7 +135,13 @@ export function TaskDetailsSidebar({
 
   const handleProjectChange = (val: string) => {
     setProjectId(val)
-    onUpdate(task.id, { projectId: val })
+    setSectionId(null)
+    onUpdate(task.id, { projectId: val, sectionId: null })
+  }
+
+  const handleSectionChange = (val: string | null) => {
+    setSectionId(val)
+    onUpdate(task.id, { sectionId: val })
   }
 
   return (
@@ -316,12 +326,24 @@ export function TaskDetailsSidebar({
 
       {/* Bottom Footer Actions */}
       <div className="border-t border-border px-5 py-3 bg-neutral-50/50 flex items-center justify-between shrink-0 select-none">
-        {/* List Dropdown Component (Bottom Left) */}
-        <ListDropdown
-          value={projectId}
-          projects={projects as ListProject[]}
-          onChange={handleProjectChange}
-        />
+        <div className="flex items-center gap-2">
+          {/* List Dropdown Component (Bottom Left) */}
+          <ListDropdown
+            value={projectId}
+            projects={projects as ListProject[]}
+            onChange={handleProjectChange}
+          />
+
+          {/* Section Dropdown Component */}
+          {projectId && projectId !== "inbox" && (
+            <SectionDropdown
+              value={sectionId}
+              sections={sections}
+              projectId={projectId}
+              onChange={handleSectionChange}
+            />
+          )}
+        </div>
 
         {/* Action icons (Bottom Right) */}
         <div className="flex items-center gap-1.5">

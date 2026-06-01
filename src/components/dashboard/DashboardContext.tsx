@@ -5,7 +5,21 @@ import { useProjectsState } from "@/src/features/projects"
 import { useTasksState, Task } from "@/src/features/tasks"
 import { useHabitsState } from "@/src/features/habits"
 import { usePomodoroState } from "@/src/features/focus"
-import { getDashboardData, updateTaskAction } from "@/src/app/actions"
+import {
+  getDashboardData,
+  updateTaskAction,
+  createSectionAction,
+  updateSectionAction,
+  deleteSectionAction,
+  reorderSectionsAction,
+} from "@/src/app/actions"
+
+export interface Section {
+  id: string
+  name: string
+  projectId: string
+  sortOrder: number
+}
 
 export type SortOption = "none" | "priority" | "tag" | "date" | "title"
 export type GroupOption = "none" | "list" | "date" | "tag" | "priority"
@@ -51,6 +65,13 @@ interface DashboardContextType {
   setViewMode: (val: ViewMode) => void
   isLoading: boolean
 
+  sections: Section[]
+  setSections: React.Dispatch<React.SetStateAction<Section[]>>
+  addSection: (name: string, projectId: string) => Promise<void>
+  updateSection: (sectionId: string, name: string) => Promise<void>
+  deleteSection: (sectionId: string) => Promise<void>
+  reorderSections: (sectionIds: string[]) => Promise<void>
+
   // Selected Task Detail Edit State
   selectedTaskId: string | null
   setSelectedTaskId: React.Dispatch<React.SetStateAction<string | null>>
@@ -62,6 +83,7 @@ interface DashboardContextType {
       priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
       dueDate?: string | null
       projectId?: string | null
+      sectionId?: string | null
     }
   ) => Promise<void>
 
@@ -95,6 +117,9 @@ export function DashboardProvider({
   // Task selection details editor state
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
+  // Sections State
+  const [sections, setSections] = useState<Section[]>([])
 
   const [sortBy, setSortByState] = useState<SortOption>("none")
   const [groupBy, setGroupByState] = useState<GroupOption>("none")
@@ -150,6 +175,9 @@ export function DashboardProvider({
     const savedDeletedTasks = localStorage.getItem("zoc_deleted_tasks")
     if (savedDeletedTasks) tasksHook.setDeletedTasks(JSON.parse(savedDeletedTasks))
 
+    const savedSections = localStorage.getItem("zoc_sections")
+    if (savedSections) setSections(JSON.parse(savedSections))
+
     // 2. Fetch fresh updates from server in the background and update cache
     async function loadData() {
       const res = await getDashboardData()
@@ -157,6 +185,10 @@ export function DashboardProvider({
         tasksHook.setTasks(res.data.tasks)
         projectsHook.setProjects(res.data.projects)
         habitsHook.setHabits(res.data.habits)
+        if (res.data.sections) {
+          setSections(res.data.sections)
+          localStorage.setItem("zoc_sections", JSON.stringify(res.data.sections))
+        }
         
         // Cache the latest PostgreSQL data
         localStorage.setItem("zoc_tasks", JSON.stringify(res.data.tasks))
@@ -178,6 +210,7 @@ export function DashboardProvider({
       priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
       dueDate?: string | null
       projectId?: string | null
+      sectionId?: string | null
     }
   ) => {
     // Optimistic state update
@@ -189,6 +222,7 @@ export function DashboardProvider({
           projectId: (updates.projectId === null || updates.projectId === "inbox")
             ? "inbox"
             : (updates.projectId || t.projectId),
+          sectionId: updates.sectionId === undefined ? t.sectionId : updates.sectionId,
         }
       }
       return t
@@ -200,6 +234,78 @@ export function DashboardProvider({
     const res = await updateTaskAction(taskId, updates)
     if (!res.success) {
       console.error("Failed to sync task updates to database:", res.error)
+    }
+  }
+
+  // Sections CRUD operations
+  const addSection = async (name: string, projectId: string) => {
+    if (!name.trim()) return
+    const tempId = Date.now().toString()
+    const newSection: Section = {
+      id: tempId,
+      name: name.trim(),
+      projectId,
+      sortOrder: sections.filter(s => s.projectId === projectId).length
+    }
+    const updated = [...sections, newSection]
+    setSections(updated)
+    localStorage.setItem("zoc_sections", JSON.stringify(updated))
+
+    const res = await createSectionAction(newSection.name, projectId)
+    if (res.success && res.sectionId) {
+      setSections(prev => {
+        const synced = prev.map(s => s.id === tempId ? { ...s, id: res.sectionId! } : s)
+        localStorage.setItem("zoc_sections", JSON.stringify(synced))
+        return synced
+      })
+    }
+  }
+
+  const updateSection = async (sectionId: string, name: string) => {
+    if (!name.trim()) return
+    const updated = sections.map(s => s.id === sectionId ? { ...s, name: name.trim() } : s)
+    setSections(updated)
+    localStorage.setItem("zoc_sections", JSON.stringify(updated))
+
+    const res = await updateSectionAction(sectionId, name.trim())
+    if (!res.success) {
+      console.error("Failed to sync section update:", res.error)
+    }
+  }
+
+  const deleteSection = async (sectionId: string) => {
+    // 1. Reassign tasks belonging to this section to no section (null) locally
+    const updatedTasks = tasksHook.tasks.map(t =>
+      t.sectionId === sectionId ? { ...t, sectionId: null } : t
+    )
+    tasksHook.saveTasks(updatedTasks)
+
+    // 2. Remove section locally
+    const updatedSections = sections.filter(s => s.id !== sectionId)
+    setSections(updatedSections)
+    localStorage.setItem("zoc_sections", JSON.stringify(updatedSections))
+
+    // 3. Sync to DB
+    const res = await deleteSectionAction(sectionId)
+    if (!res.success) {
+      console.error("Failed to delete section:", res.error)
+    }
+  }
+
+  const reorderSections = async (sectionIds: string[]) => {
+    const updated = sections.map(s => {
+      const idx = sectionIds.indexOf(s.id)
+      if (idx !== -1) {
+        return { ...s, sortOrder: idx }
+      }
+      return s
+    }).sort((a, b) => a.sortOrder - b.sortOrder)
+    setSections(updated)
+    localStorage.setItem("zoc_sections", JSON.stringify(updated))
+
+    const res = await reorderSectionsAction(sectionIds)
+    if (!res.success) {
+      console.error("Failed to sync section reordering:", res.error)
     }
   }
 
@@ -318,6 +424,12 @@ export function DashboardProvider({
         completedFiltered,
         totalFilteredCount,
         completedPercentage,
+        sections,
+        setSections,
+        addSection,
+        updateSection,
+        deleteSection,
+        reorderSections,
       }}
     >
       {children}

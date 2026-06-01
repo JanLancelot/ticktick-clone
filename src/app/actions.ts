@@ -67,6 +67,14 @@ export async function getDashboardData() {
       ],
     })
 
+    // Fetch sections
+    const dbSections = await prisma.section.findMany({
+      where: {
+        projectId: { in: projectIds },
+      },
+      orderBy: { sortOrder: "asc" },
+    })
+
     // Fetch habits
     const dbHabits = await prisma.habit.findMany({
       where: { userId },
@@ -84,6 +92,7 @@ export async function getDashboardData() {
       priority: t.priority,
       dueDate: t.dueDate ? t.dueDate.toISOString().split("T")[0] : null,
       projectId: (t.projectId === null || t.projectId === inboxProject?.id) ? "inbox" : t.projectId,
+      sectionId: t.sectionId,
       tags: t.tags.map((tt) => tt.tag.name),
       content: t.content,
       sortOrder: t.sortOrder,
@@ -162,9 +171,16 @@ export async function getDashboardData() {
       }
     })
 
+    const sections = dbSections.map((s) => ({
+      id: s.id,
+      name: s.name,
+      projectId: s.projectId,
+      sortOrder: s.sortOrder,
+    }))
+
     return {
       success: true,
-      data: { tasks, projects, habits },
+      data: { tasks, projects, habits, sections },
     }
   } catch (error: any) {
     console.error("Database error in getDashboardData:", error)
@@ -179,7 +195,8 @@ export async function createTaskAction(
   dueDateStr: string | null,
   projectId: string | null,
   tagStr: string | null,
-  parentId: string | null = null
+  parentId: string | null = null,
+  sectionId: string | null = null
 ) {
   const session = await getSession()
   if (!session) return { success: false, error: "UNAUTHORIZED" }
@@ -213,6 +230,7 @@ export async function createTaskAction(
         priority,
         dueDate: dueDateStr ? new Date(dueDateStr) : null,
         projectId: targetProjectId,
+        sectionId: sectionId || null,
         status: "NORMAL",
         parentId: parentId || null,
       },
@@ -510,7 +528,7 @@ export async function toggleHabitRecordAction(habitId: string, dateStr: string, 
   }
 }
 
-// 8. Update task properties (title, content, priority, dueDate, projectId)
+// 8. Update task properties (title, content, priority, dueDate, projectId, sectionId)
 export async function updateTaskAction(
   taskId: string,
   updates: {
@@ -519,6 +537,7 @@ export async function updateTaskAction(
     priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
     dueDate?: string | null
     projectId?: string | null
+    sectionId?: string | null
   }
 ) {
   const session = await getSession()
@@ -534,6 +553,9 @@ export async function updateTaskAction(
     }
     if (updates.projectId !== undefined) {
       data.projectId = updates.projectId === "inbox" ? null : updates.projectId
+    }
+    if (updates.sectionId !== undefined) {
+      data.sectionId = updates.sectionId
     }
 
     await prisma.task.update({
@@ -575,6 +597,8 @@ export async function syncTaskDragDropAction(
     priority?: "NONE" | "LOW" | "MEDIUM" | "HIGH"
     dueDate?: string | null
     projectId?: string | null
+    sectionId?: string | null
+    completed?: boolean
     tags?: string[]
   },
   orderedIds: string[]
@@ -591,6 +615,13 @@ export async function syncTaskDragDropAction(
     }
     if (updates.projectId !== undefined) {
       data.projectId = updates.projectId === "inbox" ? null : updates.projectId
+    }
+    if (updates.sectionId !== undefined) {
+      data.sectionId = updates.sectionId
+    }
+    if (updates.completed !== undefined) {
+      data.status = updates.completed ? "COMPLETED" : "NORMAL"
+      data.completedAt = updates.completed ? new Date() : null
     }
 
     const prismaUpdates: any[] = []
@@ -654,6 +685,79 @@ export async function syncTaskDragDropAction(
     return { success: true }
   } catch (error: any) {
     console.error("Database error in syncTaskDragDropAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 11. Create a new section
+export async function createSectionAction(name: string, projectId: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    const section = await prisma.section.create({
+      data: {
+        name,
+        projectId,
+      },
+    })
+    return { success: true, sectionId: section.id }
+  } catch (error: any) {
+    console.error("Database error in createSectionAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 12. Update an existing section
+export async function updateSectionAction(sectionId: string, name: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    await prisma.section.update({
+      where: { id: sectionId },
+      data: { name },
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in updateSectionAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 13. Delete a section
+export async function deleteSectionAction(sectionId: string) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    await prisma.section.delete({
+      where: { id: sectionId },
+    })
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in deleteSectionAction:", error)
+    return { success: false, error: "DATABASE_UNAVAILABLE" }
+  }
+}
+
+// 14. Reorder multiple sections in a transaction
+export async function reorderSectionsAction(sectionIds: string[]) {
+  const session = await getSession()
+  if (!session) return { success: false, error: "UNAUTHORIZED" }
+
+  try {
+    await prisma.$transaction(
+      sectionIds.map((id, index) =>
+        prisma.section.update({
+          where: { id },
+          data: { sortOrder: index },
+        })
+      )
+    )
+    return { success: true }
+  } catch (error: any) {
+    console.error("Database error in reorderSectionsAction:", error)
     return { success: false, error: "DATABASE_UNAVAILABLE" }
   }
 }

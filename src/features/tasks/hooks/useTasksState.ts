@@ -22,7 +22,8 @@ export function useTasksState(initialTasks: Task[] = []) {
     dueDate: string | null = null,
     projectId: string = "inbox",
     tagStr: string = "",
-    parentId: string | null = null
+    parentId: string | null = null,
+    sectionId: string | null = null
   ) => {
     if (!title.trim()) return
 
@@ -34,6 +35,7 @@ export function useTasksState(initialTasks: Task[] = []) {
       priority,
       dueDate: dueDate || null,
       projectId: projectId || "inbox",
+      sectionId: sectionId || null,
       tags: tagStr.trim() ? [tagStr.trim().toLowerCase()] : [],
       sortOrder: 0,
       parentId: parentId || null
@@ -48,7 +50,8 @@ export function useTasksState(initialTasks: Task[] = []) {
       tempTask.dueDate,
       tempTask.projectId,
       tagStr.trim() || null,
-      parentId || null
+      parentId || null,
+      tempTask.sectionId
     )
 
     if (res.success && res.taskId) {
@@ -125,15 +128,21 @@ export function useTasksState(initialTasks: Task[] = []) {
       dueDate?: string | null
       projectId?: string | null
       tags?: string[]
+      sectionId?: string | null
+      completed?: boolean
     },
     orderedIds: string[]
   ) => {
     // 1. First, apply property updates to the dragged task in the local array
     const updatedTasks = tasks.map(t => {
       if (t.id === taskId) {
+        const completedAt = updates.completed === undefined
+          ? t.completedAt
+          : (updates.completed ? new Date().toISOString() : null)
         return {
           ...t,
           ...updates,
+          completedAt,
           projectId: (updates.projectId === null || updates.projectId === "inbox")
             ? "inbox"
             : (updates.projectId || t.projectId)

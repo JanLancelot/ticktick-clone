@@ -79,9 +79,12 @@ export function KanbanView({
     searchQuery,
     setSearchQuery,
     showSearchInput,
-    setShowSearchInput
+    setShowSearchInput,
+    sections
   } = useDashboard()
   const { triggerCelebration } = useCelebration()
+  
+  const isProjectTab = !["today", "upcoming", "inbox", "habits", "focus", "calendar"].includes(activeTab)
 
   const [groupOpen, setGroupOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
@@ -182,6 +185,33 @@ export function KanbanView({
     const { todayStr, tomorrowStr, sevenDaysStr } = getDates()
 
     if (groupBy === "none") {
+      if (isProjectTab) {
+        const projectSecs = sections
+          .filter((s) => s.projectId === activeTab)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+
+        return [
+          {
+            id: "no_section",
+            title: "No Section",
+            color: "#9ca3af",
+            tasks: sortTasks(currentList.filter(t => !t.completed && !t.sectionId), sortBy),
+          },
+          ...projectSecs.map(sec => ({
+            id: sec.id,
+            title: sec.name,
+            color: "#3b82f6",
+            tasks: sortTasks(currentList.filter(t => !t.completed && t.sectionId === sec.id), sortBy),
+          })),
+          {
+            id: "completed",
+            title: "Completed",
+            color: "#10b981",
+            tasks: sortTasks(currentList.filter(t => t.completed), sortBy),
+          }
+        ]
+      }
+
       return [
         {
           id: "todo",
@@ -326,7 +356,7 @@ export function KanbanView({
     }
 
     return []
-  }, [localTasks, allTasks, groupBy, sortBy, projects, isDragging])
+  }, [localTasks, allTasks, groupBy, sortBy, projects, isDragging, sections, activeTab])
 
   // 4. Drag & Drop Handlers
   const handleDragStart = (e: React.DragEvent, taskId: string) => {
@@ -371,6 +401,15 @@ export function KanbanView({
 
     if (groupBy === "none") {
       updatedDraggedItem.completed = targetColumnId === "completed"
+      if (isProjectTab) {
+        if (targetColumnId === "completed") {
+          // Keep current sectionId
+        } else if (targetColumnId === "no_section") {
+          updatedDraggedItem.sectionId = null
+        } else {
+          updatedDraggedItem.sectionId = targetColumnId
+        }
+      }
     } else if (groupBy === "priority") {
       updatedDraggedItem.priority = targetColumnId as any
     } else if (groupBy === "list") {
@@ -411,11 +450,42 @@ export function KanbanView({
 
     if (groupBy === "none") {
       const shouldBeCompleted = targetColumnId === "completed"
-      if (targetTask.completed !== shouldBeCompleted) {
-        if (shouldBeCompleted) {
+      const updates: {
+        completed?: boolean
+        sectionId?: string | null
+      } = {}
+
+      if (shouldBeCompleted) {
+        updates.completed = true
+        if (!targetTask.completed) {
           triggerCelebration(e.clientX, e.clientY)
         }
-        onToggle(draggedTaskId)
+      } else {
+        updates.completed = false
+        if (isProjectTab) {
+          if (targetColumnId === "no_section") {
+            updates.sectionId = null
+          } else {
+            updates.sectionId = targetColumnId
+          }
+        }
+      }
+
+      let updatedTasksList = [...localTasks]
+      updatedTasksList = updatedTasksList.map(t => {
+        if (t.id === draggedTaskId) {
+          return {
+            ...t,
+            ...updates,
+          }
+        }
+        return t
+      })
+
+      const orderedIds = updatedTasksList.map(t => t.id)
+
+      if (tasksHook && tasksHook.reorderAndUpdateTask) {
+        tasksHook.reorderAndUpdateTask(draggedTaskId, updates, orderedIds)
       }
       return
     }
@@ -485,6 +555,7 @@ export function KanbanView({
     let dueDate: string | null = null
     let projectId = activeTab === "today" || activeTab === "upcoming" ? "inbox" : activeTab
     let tagStr = ""
+    let sectionId: string | null = null
 
     if (groupBy === "priority") {
       priority = columnId as any
@@ -504,10 +575,14 @@ export function KanbanView({
       }
     } else if (groupBy === "tag") {
       if (columnId !== "notag") tagStr = columnId
+    } else if (groupBy === "none" && isProjectTab) {
+      if (columnId !== "no_section") {
+        sectionId = columnId
+      }
     }
 
     if (tasksHook && tasksHook.addTask) {
-      tasksHook.addTask(title, priority, dueDate, projectId, tagStr)
+      tasksHook.addTask(title, priority, dueDate, projectId, tagStr, sectionId)
     }
   }
 

@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronUp,
   ChevronDown,
+  ChevronRight,
   ArrowUpDown,
   Layers,
   Flag,
@@ -63,8 +64,64 @@ export function TasksList({
   onRowClick,
   isTrash = false,
 }: TasksListProps) {
-  const { sortBy, setSortBy, groupBy, setGroupBy, viewMode, setViewMode, isLoading, tasksHook, showOnlyCompleted, searchQuery, setSearchQuery, showSearchInput, setShowSearchInput } = useDashboard()
+  const {
+    sortBy,
+    setSortBy,
+    groupBy,
+    setGroupBy,
+    viewMode,
+    setViewMode,
+    isLoading,
+    tasksHook,
+    showOnlyCompleted,
+    searchQuery,
+    setSearchQuery,
+    showSearchInput,
+    setShowSearchInput,
+    sections,
+    addSection,
+    updateSection,
+    deleteSection,
+    reorderSections,
+    activeTab,
+  } = useDashboard()
+  
   const [completedExpanded, setCompletedExpanded] = useState(true)
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({})
+  const [isEditingSecId, setIsEditingSecId] = useState<string | null>(null)
+  const [editingSecName, setEditingSecName] = useState("")
+  const [showAddSectionInput, setShowAddSectionInput] = useState(false)
+  const [newSectionName, setNewSectionName] = useState("")
+
+  const isProjectTab = !["today", "upcoming", "inbox", "habits", "focus", "calendar"].includes(activeTab)
+
+  const handleSaveSectionRename = (secId: string) => {
+    if (editingSecName.trim()) {
+      updateSection(secId, editingSecName.trim())
+    }
+    setIsEditingSecId(null)
+  }
+
+  const handleAddSectionSubmit = () => {
+    if (newSectionName.trim()) {
+      addSection(newSectionName.trim(), activeTab)
+      setNewSectionName("")
+      setShowAddSectionInput(false)
+    }
+  }
+
+  const toggleSectionCollapse = (secId: string) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [secId]: !prev[secId],
+    }))
+  }
+
+  const projectSections = useMemo(() => {
+    return sections
+      .filter((s) => s.projectId === activeTab)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [sections, activeTab])
   const [groupOpen, setGroupOpen] = useState(false)
   const [sortOpen, setSortOpen] = useState(false)
   const [completedDateFilter, setCompletedDateFilter] = useState<string>("all")
@@ -525,15 +582,32 @@ export function TasksList({
   }, [activeTasks, sortBy])
 
   const currentVisualTasks = useMemo(() => {
-    if (groupBy === "none") {
-      return sortedActive
+    if (groupBy !== "none") {
+      const activeGroups = groupTasks(activeTasks, groupBy)
+      activeGroups.forEach((group) => {
+        group.tasks = sortTasks(group.tasks, sortBy)
+      })
+      return activeGroups.flatMap((g) => g.tasks)
     }
-    const activeGroups = groupTasks(activeTasks, groupBy)
-    activeGroups.forEach((group) => {
-      group.tasks = sortTasks(group.tasks, sortBy)
-    })
-    return activeGroups.flatMap((g) => g.tasks)
-  }, [activeTasks, sortedActive, groupBy, sortBy])
+
+    if (isProjectTab && projectSections.length > 0) {
+      const unsectioned = sortTasks(
+        activeTasks.filter(
+          (t) => !t.sectionId || !projectSections.some((s) => s.id === t.sectionId)
+        ),
+        sortBy
+      )
+      const sectionTasksList = projectSections.flatMap((sec) => {
+        return sortTasks(
+          activeTasks.filter((t) => t.sectionId === sec.id),
+          sortBy
+        )
+      })
+      return [...unsectioned, ...sectionTasksList]
+    }
+
+    return sortedActive
+  }, [activeTasks, sortedActive, groupBy, sortBy, isProjectTab, projectSections])
 
   const canDrag = sortBy !== "title" && !isTrash
 
@@ -590,15 +664,19 @@ export function TasksList({
     const targetNeighbor = updated[hoverIndex] || updated[hoverIndex - 1]
     const updatedDraggedItem = { ...draggedItem }
 
-    if (targetNeighbor && groupBy !== "none") {
-      if (groupBy === "priority") {
-        updatedDraggedItem.priority = targetNeighbor.priority
-      } else if (groupBy === "list") {
-        updatedDraggedItem.projectId = targetNeighbor.projectId
-      } else if (groupBy === "date") {
-        updatedDraggedItem.dueDate = targetNeighbor.dueDate
-      } else if (groupBy === "tag") {
-        updatedDraggedItem.tags = [...targetNeighbor.tags]
+    if (targetNeighbor) {
+      if (groupBy !== "none") {
+        if (groupBy === "priority") {
+          updatedDraggedItem.priority = targetNeighbor.priority
+        } else if (groupBy === "list") {
+          updatedDraggedItem.projectId = targetNeighbor.projectId
+        } else if (groupBy === "date") {
+          updatedDraggedItem.dueDate = targetNeighbor.dueDate
+        } else if (groupBy === "tag") {
+          updatedDraggedItem.tags = [...targetNeighbor.tags]
+        }
+      } else if (isProjectTab) {
+        updatedDraggedItem.sectionId = targetNeighbor.sectionId || null
       }
     }
 
@@ -619,6 +697,7 @@ export function TasksList({
       dueDate?: string | null
       projectId?: string | null
       tags?: string[]
+      sectionId?: string | null
     } = {}
 
     if (groupBy === "priority") {
@@ -629,6 +708,8 @@ export function TasksList({
       updates.dueDate = finalDraggedTask.dueDate
     } else if (groupBy === "tag") {
       updates.tags = finalDraggedTask.tags
+    } else if (isProjectTab && groupBy === "none") {
+      updates.sectionId = finalDraggedTask.sectionId || null
     }
 
     const orderedIds = localTasks.map((t) => t.id)
@@ -668,6 +749,172 @@ export function TasksList({
             <div className="h-6 w-6 rounded bg-muted/65 shrink-0 opacity-40" />
           </div>
         ))}
+      </div>
+    )
+  } else if (groupBy === "none" && isProjectTab && projectSections.length > 0) {
+    const unsectionedTasks = (isDragging ? localTasks : sortedActive).filter(
+      (t) => !t.sectionId || !projectSections.some((s) => s.id === t.sectionId)
+    )
+
+    processedActiveElements = (
+      <div className="space-y-6">
+        {/* Unsectioned Tasks */}
+        {unsectionedTasks.length > 0 && (
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2 px-1 select-none">
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/65 shrink-0" />
+              <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground">
+                No Section
+              </h4>
+              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                {unsectionedTasks.length}
+              </span>
+            </div>
+            <div className="space-y-2 pl-3 border-l border-border/60 ml-2">
+              {unsectionedTasks.map((task) => {
+                const taskIndex = (isDragging ? localTasks : sortedActive).findIndex((t) => t.id === task.id)
+                return (
+                  <div
+                    key={task.id}
+                    draggable={canDrag}
+                    onDragStart={(e) => handleDragStart(e, task.id)}
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, taskIndex !== -1 ? taskIndex : 0)}
+                    onDragEnd={handleDragEnd}
+                    className={`transition-all duration-250 space-y-1.5 ${
+                      draggedTaskId === task.id
+                        ? "opacity-30 scale-[0.98] border border-dashed border-primary/30 rounded-xl"
+                        : ""
+                    }`}
+                  >
+                    <TaskItem
+                      task={task}
+                      projects={projects}
+                      onToggle={onToggle}
+                      onDelete={onDelete}
+                      onSelectFocus={onSelectFocus}
+                      isFocusSelected={selectedTaskId === task.id}
+                      isRowSelected={activeSelectedTaskId === task.id}
+                      onRowClick={onRowClick}
+                      isDraggable={canDrag}
+                    />
+                    {renderSubtasksForList(task)}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Section Groups */}
+        {projectSections.map((section) => {
+          const sectionTasks = (isDragging ? localTasks : sortedActive).filter(
+            (t) => t.sectionId === section.id
+          )
+          const isCollapsed = !!collapsedSections[section.id]
+
+          return (
+            <div key={section.id} className="space-y-2.5">
+              <div className="flex items-center justify-between group/sec px-1 border-b border-border/40 pb-1.5 select-none">
+                <div className="flex items-center gap-2 truncate">
+                  <button
+                    onClick={() => toggleSectionCollapse(section.id)}
+                    className="text-muted-foreground/60 hover:text-foreground cursor-pointer p-0.5 hover:bg-muted rounded-md transition-colors"
+                  >
+                    {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </button>
+                  {isEditingSecId === section.id ? (
+                    <input
+                      type="text"
+                      value={editingSecName}
+                      onChange={(e) => setEditingSecName(e.target.value)}
+                      onBlur={() => handleSaveSectionRename(section.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveSectionRename(section.id)
+                        if (e.key === "Escape") setIsEditingSecId(null)
+                      }}
+                      className="text-[10px] font-extrabold text-foreground uppercase tracking-widest bg-transparent border-b border-primary focus:outline-none py-0 focus:ring-0 w-32"
+                      autoFocus
+                    />
+                  ) : (
+                    <h4
+                      onDoubleClick={() => {
+                        setIsEditingSecId(section.id)
+                        setEditingSecName(section.name)
+                      }}
+                      className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:text-foreground cursor-pointer truncate"
+                      title="Double click to rename"
+                    >
+                      {section.name}
+                    </h4>
+                  )}
+                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                    {sectionTasks.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1 opacity-0 group-hover/sec:opacity-100 transition-opacity shrink-0">
+                  <button
+                    onClick={() => {
+                      setIsEditingSecId(section.id)
+                      setEditingSecName(section.name)
+                    }}
+                    className="text-muted-foreground hover:text-foreground p-0.5 hover:bg-muted rounded-md cursor-pointer text-[9px] font-black uppercase tracking-wider"
+                  >
+                    Rename
+                  </button>
+                  <span className="text-muted-foreground/30 text-[9px]">•</span>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete "${section.name}"? Tasks inside will be kept.`)) {
+                        deleteSection(section.id)
+                      }
+                    }}
+                    className="text-destructive hover:text-destructive/80 p-0.5 hover:bg-destructive/5 rounded-md cursor-pointer text-[9px] font-black uppercase tracking-wider"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              {!isCollapsed && (
+                <div className="space-y-2 pl-3 border-l border-border/60 ml-2.5 min-h-[8px]">
+                  {sectionTasks.map((task) => {
+                    const taskIndex = (isDragging ? localTasks : sortedActive).findIndex((t) => t.id === task.id)
+                    return (
+                      <div
+                        key={task.id}
+                        draggable={canDrag}
+                        onDragStart={(e) => handleDragStart(e, task.id)}
+                        onDragOver={handleDragOver}
+                        onDragEnter={(e) => handleDragEnter(e, taskIndex !== -1 ? taskIndex : 0)}
+                        onDragEnd={handleDragEnd}
+                        className={`transition-all duration-250 space-y-1.5 ${
+                          draggedTaskId === task.id
+                            ? "opacity-30 scale-[0.98] border border-dashed border-primary/30 rounded-xl"
+                            : ""
+                        }`}
+                      >
+                        <TaskItem
+                          task={task}
+                          projects={projects}
+                          onToggle={onToggle}
+                          onDelete={onDelete}
+                          onSelectFocus={onSelectFocus}
+                          isFocusSelected={selectedTaskId === task.id}
+                          isRowSelected={activeSelectedTaskId === task.id}
+                          onRowClick={onRowClick}
+                          isDraggable={canDrag}
+                        />
+                        {renderSubtasksForList(task)}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     )
   } else if (activeTasks.length === 0) {
@@ -1384,6 +1631,49 @@ export function TasksList({
         </div>
 
         {processedActiveElements}
+
+        {isProjectTab && !isTrash && !showOnlyCompleted && (
+          <div className="pt-4 pb-2 border-t border-border/40">
+            {showAddSectionInput ? (
+              <div className="flex items-center gap-2.5 max-w-sm">
+                <input
+                  type="text"
+                  placeholder="New section name..."
+                  value={newSectionName}
+                  onChange={(e) => setNewSectionName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddSectionSubmit()
+                    if (e.key === "Escape") setShowAddSectionInput(false)
+                  }}
+                  className="flex-1 h-8 px-3 text-[11px] bg-card rounded-xl border border-border focus:outline-none font-semibold shadow-3xs text-foreground focus:ring-0 focus-visible:ring-0"
+                  autoFocus
+                />
+                <button
+                  onClick={handleAddSectionSubmit}
+                  className="h-8 px-3 text-[11px] bg-primary text-primary-foreground font-black rounded-xl hover:bg-primary/95 transition-all cursor-pointer shadow-3xs"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => setShowAddSectionInput(false)}
+                  className="h-8 px-3 text-[11px] border border-border hover:bg-muted text-muted-foreground font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setShowAddSectionInput(true)
+                  setNewSectionName("")
+                }}
+                className="flex items-center gap-2 text-[10px] font-black uppercase text-primary tracking-widest hover:bg-primary/5 px-3 py-1.5 rounded-xl border border-dashed border-primary/20 hover:border-primary/40 transition-all cursor-pointer shadow-3xs"
+              >
+                + Add Section
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Collapsible Completed Tasks List */}
