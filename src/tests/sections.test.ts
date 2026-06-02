@@ -14,10 +14,20 @@ async function runTests() {
     });
 
     if (!testProject) {
+      let testUser = await prisma.user.findFirst();
+      if (!testUser) {
+        testUser = await prisma.user.create({
+          data: {
+            email: "test.sections@example.com",
+            name: "Test Sections User",
+          },
+        });
+      }
       testProject = await prisma.project.create({
         data: {
           name: "Test Sections Project",
           color: "#3b82f6",
+          userId: testUser.id,
         },
       });
     }

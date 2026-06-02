@@ -23,7 +23,8 @@ export function useTasksState(initialTasks: Task[] = []) {
     projectId: string = "inbox",
     tagStr: string = "",
     parentId: string | null = null,
-    sectionId: string | null = null
+    sectionId: string | null = null,
+    duration: string | null = null
   ) => {
     if (!title.trim()) return
 
@@ -38,7 +39,8 @@ export function useTasksState(initialTasks: Task[] = []) {
       sectionId: sectionId || null,
       tags: tagStr.trim() ? [tagStr.trim().toLowerCase()] : [],
       sortOrder: 0,
-      parentId: parentId || null
+      parentId: parentId || null,
+      duration: duration
     }
 
     const currentTasks = [...tasks, tempTask]
@@ -51,7 +53,8 @@ export function useTasksState(initialTasks: Task[] = []) {
       tempTask.projectId,
       tagStr.trim() || null,
       parentId || null,
-      tempTask.sectionId
+      tempTask.sectionId,
+      duration
     )
 
     if (res.success && res.taskId) {
@@ -130,6 +133,7 @@ export function useTasksState(initialTasks: Task[] = []) {
       tags?: string[]
       sectionId?: string | null
       completed?: boolean
+      duration?: string | null
     },
     orderedIds: string[]
   ) => {

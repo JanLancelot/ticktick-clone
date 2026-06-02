@@ -9,8 +9,8 @@
  * 🟢 You can import this file directly.
  */
 import type * as runtime from "@prisma/client/runtime/client"
-import type * as $Enums from "../enums.ts"
-import type * as Prisma from "../internal/prismaNamespace.ts"
+import type * as $Enums from "../enums"
+import type * as Prisma from "../internal/prismaNamespace"
 
 /**
  * Model Task
@@ -42,6 +42,7 @@ export type TaskMinAggregateOutputType = {
   priority: $Enums.TaskPriority | null
   startDate: Date | null
   dueDate: Date | null
+  duration: string | null
   isAllDay: boolean | null
   timezone: string | null
   repeatFlag: string | null
@@ -62,6 +63,7 @@ export type TaskMaxAggregateOutputType = {
   priority: $Enums.TaskPriority | null
   startDate: Date | null
   dueDate: Date | null
+  duration: string | null
   isAllDay: boolean | null
   timezone: string | null
   repeatFlag: string | null
@@ -82,6 +84,7 @@ export type TaskCountAggregateOutputType = {
   priority: number
   startDate: number
   dueDate: number
+  duration: number
   isAllDay: number
   timezone: number
   repeatFlag: number
@@ -112,6 +115,7 @@ export type TaskMinAggregateInputType = {
   priority?: true
   startDate?: true
   dueDate?: true
+  duration?: true
   isAllDay?: true
   timezone?: true
   repeatFlag?: true
@@ -132,6 +136,7 @@ export type TaskMaxAggregateInputType = {
   priority?: true
   startDate?: true
   dueDate?: true
+  duration?: true
   isAllDay?: true
   timezone?: true
   repeatFlag?: true
@@ -152,6 +157,7 @@ export type TaskCountAggregateInputType = {
   priority?: true
   startDate?: true
   dueDate?: true
+  duration?: true
   isAllDay?: true
   timezone?: true
   repeatFlag?: true
@@ -259,6 +265,7 @@ export type TaskGroupByOutputType = {
   priority: $Enums.TaskPriority
   startDate: Date | null
   dueDate: Date | null
+  duration: string | null
   isAllDay: boolean
   timezone: string | null
   repeatFlag: string | null
@@ -302,6 +309,7 @@ export type TaskWhereInput = {
   priority?: Prisma.EnumTaskPriorityFilter<"Task"> | $Enums.TaskPriority
   startDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   dueDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
+  duration?: Prisma.StringNullableFilter<"Task"> | string | null
   isAllDay?: Prisma.BoolFilter<"Task"> | boolean
   timezone?: Prisma.StringNullableFilter<"Task"> | string | null
   repeatFlag?: Prisma.StringNullableFilter<"Task"> | string | null
@@ -330,6 +338,7 @@ export type TaskOrderByWithRelationInput = {
   priority?: Prisma.SortOrder
   startDate?: Prisma.SortOrderInput | Prisma.SortOrder
   dueDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  duration?: Prisma.SortOrderInput | Prisma.SortOrder
   isAllDay?: Prisma.SortOrder
   timezone?: Prisma.SortOrderInput | Prisma.SortOrder
   repeatFlag?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -361,6 +370,7 @@ export type TaskWhereUniqueInput = Prisma.AtLeast<{
   priority?: Prisma.EnumTaskPriorityFilter<"Task"> | $Enums.TaskPriority
   startDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   dueDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
+  duration?: Prisma.StringNullableFilter<"Task"> | string | null
   isAllDay?: Prisma.BoolFilter<"Task"> | boolean
   timezone?: Prisma.StringNullableFilter<"Task"> | string | null
   repeatFlag?: Prisma.StringNullableFilter<"Task"> | string | null
@@ -389,6 +399,7 @@ export type TaskOrderByWithAggregationInput = {
   priority?: Prisma.SortOrder
   startDate?: Prisma.SortOrderInput | Prisma.SortOrder
   dueDate?: Prisma.SortOrderInput | Prisma.SortOrder
+  duration?: Prisma.SortOrderInput | Prisma.SortOrder
   isAllDay?: Prisma.SortOrder
   timezone?: Prisma.SortOrderInput | Prisma.SortOrder
   repeatFlag?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -417,6 +428,7 @@ export type TaskScalarWhereWithAggregatesInput = {
   priority?: Prisma.EnumTaskPriorityWithAggregatesFilter<"Task"> | $Enums.TaskPriority
   startDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
   dueDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Task"> | Date | string | null
+  duration?: Prisma.StringNullableWithAggregatesFilter<"Task"> | string | null
   isAllDay?: Prisma.BoolWithAggregatesFilter<"Task"> | boolean
   timezone?: Prisma.StringNullableWithAggregatesFilter<"Task"> | string | null
   repeatFlag?: Prisma.StringNullableWithAggregatesFilter<"Task"> | string | null
@@ -437,6 +449,7 @@ export type TaskCreateInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -462,6 +475,7 @@ export type TaskUncheckedCreateInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -487,6 +501,7 @@ export type TaskUpdateInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -512,6 +527,7 @@ export type TaskUncheckedUpdateInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -537,6 +553,7 @@ export type TaskCreateManyInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -557,6 +574,7 @@ export type TaskUpdateManyMutationInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -574,6 +592,7 @@ export type TaskUncheckedUpdateManyInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -609,6 +628,7 @@ export type TaskCountOrderByAggregateInput = {
   priority?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isAllDay?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   repeatFlag?: Prisma.SortOrder
@@ -633,6 +653,7 @@ export type TaskMaxOrderByAggregateInput = {
   priority?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isAllDay?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   repeatFlag?: Prisma.SortOrder
@@ -653,6 +674,7 @@ export type TaskMinOrderByAggregateInput = {
   priority?: Prisma.SortOrder
   startDate?: Prisma.SortOrder
   dueDate?: Prisma.SortOrder
+  duration?: Prisma.SortOrder
   isAllDay?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   repeatFlag?: Prisma.SortOrder
@@ -894,6 +916,7 @@ export type TaskCreateWithoutProjectInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -918,6 +941,7 @@ export type TaskUncheckedCreateWithoutProjectInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -971,6 +995,7 @@ export type TaskScalarWhereInput = {
   priority?: Prisma.EnumTaskPriorityFilter<"Task"> | $Enums.TaskPriority
   startDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
   dueDate?: Prisma.DateTimeNullableFilter<"Task"> | Date | string | null
+  duration?: Prisma.StringNullableFilter<"Task"> | string | null
   isAllDay?: Prisma.BoolFilter<"Task"> | boolean
   timezone?: Prisma.StringNullableFilter<"Task"> | string | null
   repeatFlag?: Prisma.StringNullableFilter<"Task"> | string | null
@@ -991,6 +1016,7 @@ export type TaskCreateWithoutSubtasksInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1015,6 +1041,7 @@ export type TaskUncheckedCreateWithoutSubtasksInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1044,6 +1071,7 @@ export type TaskCreateWithoutParentInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1068,6 +1096,7 @@ export type TaskUncheckedCreateWithoutParentInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1113,6 +1142,7 @@ export type TaskUpdateWithoutSubtasksInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1137,6 +1167,7 @@ export type TaskUncheckedUpdateWithoutSubtasksInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1177,6 +1208,7 @@ export type TaskCreateWithoutSectionInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1201,6 +1233,7 @@ export type TaskUncheckedCreateWithoutSectionInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1251,6 +1284,7 @@ export type TaskCreateWithoutTagsInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1275,6 +1309,7 @@ export type TaskUncheckedCreateWithoutTagsInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1315,6 +1350,7 @@ export type TaskUpdateWithoutTagsInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1339,6 +1375,7 @@ export type TaskUncheckedUpdateWithoutTagsInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1363,6 +1400,7 @@ export type TaskCreateWithoutRemindersInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1387,6 +1425,7 @@ export type TaskUncheckedCreateWithoutRemindersInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1427,6 +1466,7 @@ export type TaskUpdateWithoutRemindersInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1451,6 +1491,7 @@ export type TaskUncheckedUpdateWithoutRemindersInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1475,6 +1516,7 @@ export type TaskCreateWithoutAttachmentsInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1499,6 +1541,7 @@ export type TaskUncheckedCreateWithoutAttachmentsInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1539,6 +1582,7 @@ export type TaskUpdateWithoutAttachmentsInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1563,6 +1607,7 @@ export type TaskUncheckedUpdateWithoutAttachmentsInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1587,6 +1632,7 @@ export type TaskCreateWithoutFocusRecordsInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1611,6 +1657,7 @@ export type TaskUncheckedCreateWithoutFocusRecordsInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1651,6 +1698,7 @@ export type TaskUpdateWithoutFocusRecordsInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1675,6 +1723,7 @@ export type TaskUncheckedUpdateWithoutFocusRecordsInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1699,6 +1748,7 @@ export type TaskCreateManyProjectInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1718,6 +1768,7 @@ export type TaskUpdateWithoutProjectInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1742,6 +1793,7 @@ export type TaskUncheckedUpdateWithoutProjectInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1766,6 +1818,7 @@ export type TaskUncheckedUpdateManyWithoutProjectInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1785,6 +1838,7 @@ export type TaskCreateManyParentInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1804,6 +1858,7 @@ export type TaskUpdateWithoutParentInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1828,6 +1883,7 @@ export type TaskUncheckedUpdateWithoutParentInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1852,6 +1908,7 @@ export type TaskUncheckedUpdateManyWithoutParentInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1871,6 +1928,7 @@ export type TaskCreateManySectionInput = {
   priority?: $Enums.TaskPriority
   startDate?: Date | string | null
   dueDate?: Date | string | null
+  duration?: string | null
   isAllDay?: boolean
   timezone?: string | null
   repeatFlag?: string | null
@@ -1890,6 +1948,7 @@ export type TaskUpdateWithoutSectionInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1914,6 +1973,7 @@ export type TaskUncheckedUpdateWithoutSectionInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1938,6 +1998,7 @@ export type TaskUncheckedUpdateManyWithoutSectionInput = {
   priority?: Prisma.EnumTaskPriorityFieldUpdateOperationsInput | $Enums.TaskPriority
   startDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   dueDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  duration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAllDay?: Prisma.BoolFieldUpdateOperationsInput | boolean
   timezone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   repeatFlag?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2024,6 +2085,7 @@ export type TaskSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   priority?: boolean
   startDate?: boolean
   dueDate?: boolean
+  duration?: boolean
   isAllDay?: boolean
   timezone?: boolean
   repeatFlag?: boolean
@@ -2053,6 +2115,7 @@ export type TaskSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   priority?: boolean
   startDate?: boolean
   dueDate?: boolean
+  duration?: boolean
   isAllDay?: boolean
   timezone?: boolean
   repeatFlag?: boolean
@@ -2076,6 +2139,7 @@ export type TaskSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   priority?: boolean
   startDate?: boolean
   dueDate?: boolean
+  duration?: boolean
   isAllDay?: boolean
   timezone?: boolean
   repeatFlag?: boolean
@@ -2099,6 +2163,7 @@ export type TaskSelectScalar = {
   priority?: boolean
   startDate?: boolean
   dueDate?: boolean
+  duration?: boolean
   isAllDay?: boolean
   timezone?: boolean
   repeatFlag?: boolean
@@ -2111,7 +2176,7 @@ export type TaskSelectScalar = {
   updatedAt?: boolean
 }
 
-export type TaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "status" | "priority" | "startDate" | "dueDate" | "isAllDay" | "timezone" | "repeatFlag" | "sortOrder" | "completedAt" | "projectId" | "sectionId" | "parentId" | "createdAt" | "updatedAt", ExtArgs["result"]["task"]>
+export type TaskOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "content" | "status" | "priority" | "startDate" | "dueDate" | "duration" | "isAllDay" | "timezone" | "repeatFlag" | "sortOrder" | "completedAt" | "projectId" | "sectionId" | "parentId" | "createdAt" | "updatedAt", ExtArgs["result"]["task"]>
 export type TaskInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   project?: boolean | Prisma.Task$projectArgs<ExtArgs>
   section?: boolean | Prisma.Task$sectionArgs<ExtArgs>
@@ -2154,6 +2219,7 @@ export type $TaskPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     priority: $Enums.TaskPriority
     startDate: Date | null
     dueDate: Date | null
+    duration: string | null
     isAllDay: boolean
     timezone: string | null
     repeatFlag: string | null
@@ -2602,6 +2668,7 @@ export interface TaskFieldRefs {
   readonly priority: Prisma.FieldRef<"Task", 'TaskPriority'>
   readonly startDate: Prisma.FieldRef<"Task", 'DateTime'>
   readonly dueDate: Prisma.FieldRef<"Task", 'DateTime'>
+  readonly duration: Prisma.FieldRef<"Task", 'String'>
   readonly isAllDay: Prisma.FieldRef<"Task", 'Boolean'>
   readonly timezone: Prisma.FieldRef<"Task", 'String'>
   readonly repeatFlag: Prisma.FieldRef<"Task", 'String'>

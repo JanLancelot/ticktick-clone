@@ -11,5 +11,6 @@ export interface Task {
   sortOrder: number // Added to support custom sorting
   parentId?: string | null // Added to support subtasks
   completedAt?: string | null // Added to support completion grouping/filtering
+  duration?: string | null // duration time range e.g. "09:00-17:00"
 }
 

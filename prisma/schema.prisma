@@ -173,6 +173,7 @@ model Task {
   // Scheduling
   startDate DateTime?
   dueDate   DateTime?
+  duration  String?
   isAllDay  Boolean   @default(true)
   timezone  String?
 

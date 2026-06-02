@@ -28,6 +28,7 @@ interface TaskDetailsSidebarProps {
       dueDate?: string | null
       projectId?: string | null
       sectionId?: string | null
+      duration?: string | null
     }
   ) => Promise<void> | void
   onToggleComplete: (taskId: string) => void
@@ -168,6 +169,8 @@ export function TaskDetailsSidebar({
           <CalendarDropdown
             value={dueDate || null}
             onChange={handleDueDateChange}
+            duration={task.duration}
+            onDurationChange={(dur) => onUpdate(task.id, { duration: dur })}
           />
         </div>
 

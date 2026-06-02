@@ -34,8 +34,8 @@ export default function TasksPage() {
             activeTab={activeTab}
             defaultDueDate={newTaskDueDate}
             existingTags={Array.from(new Set(tasksHook.tasks.flatMap((t) => t.tags)))}
-            onAddTask={(title, priority, dueDate, projectId, tag) => {
-              tasksHook.addTask(title, priority, dueDate, projectId, tag)
+            onAddTask={(title, priority, dueDate, projectId, tag, duration) => {
+              tasksHook.addTask(title, priority, dueDate, projectId, tag, null, null, duration)
               setNewTaskDueDate("")
             }}
           />

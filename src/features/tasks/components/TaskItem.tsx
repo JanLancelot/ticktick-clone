@@ -37,6 +37,26 @@ export function TaskItem({
   const { triggerCelebration } = useCelebration()
   const getTodayDateString = () => new Date().toISOString().split("T")[0]
 
+  const formatTimeRangeStr = (rawRange: string | null) => {
+    if (!rawRange) return ""
+    try {
+      const [start, end] = rawRange.split("-")
+      const [sH, sM] = start.split(":").map(Number)
+      const [eH, eM] = end.split(":").map(Number)
+      
+      const formatTime = (h: number, m: number) => {
+        const period = h >= 12 ? "PM" : "AM"
+        let h12 = h % 12
+        if (h12 === 0) h12 = 12
+        return `${h12}:${String(m).padStart(2, "0")} ${period}`
+      }
+      
+      return `${formatTime(sH, sM)} - ${formatTime(eH, eM)}`
+    } catch {
+      return rawRange
+    }
+  }
+
 
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
@@ -132,6 +152,13 @@ export function TaskItem({
                 }`}
               >
                 📅 {task.dueDate === getTodayDateString() ? "Today" : task.dueDate}
+              </span>
+            )}
+
+            {task.duration && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-black px-1.5 py-0.5 rounded-sm border bg-blue-500/5 border-blue-500/20 text-blue-600 dark:text-blue-400">
+                <Timer className="h-2.5 w-2.5 shrink-0" />
+                <span>{formatTimeRangeStr(task.duration)}</span>
               </span>
             )}
 

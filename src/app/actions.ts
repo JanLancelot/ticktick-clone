@@ -98,6 +98,7 @@ export async function getDashboardData() {
       sortOrder: t.sortOrder,
       parentId: t.parentId,
       completedAt: t.completedAt ? t.completedAt.toISOString() : null,
+      duration: t.duration,
     }))
 
     // Transform database projects to client format
@@ -196,7 +197,8 @@ export async function createTaskAction(
   projectId: string | null,
   tagStr: string | null,
   parentId: string | null = null,
-  sectionId: string | null = null
+  sectionId: string | null = null,
+  duration: string | null = null
 ) {
   const session = await getSession()
   if (!session) return { success: false, error: "UNAUTHORIZED" }
@@ -233,6 +235,7 @@ export async function createTaskAction(
         sectionId: sectionId || null,
         status: "NORMAL",
         parentId: parentId || null,
+        duration: duration,
       },
     })
 
@@ -538,6 +541,7 @@ export async function updateTaskAction(
     dueDate?: string | null
     projectId?: string | null
     sectionId?: string | null
+    duration?: string | null
   }
 ) {
   const session = await getSession()
@@ -556,6 +560,9 @@ export async function updateTaskAction(
     }
     if (updates.sectionId !== undefined) {
       data.sectionId = updates.sectionId
+    }
+    if (updates.duration !== undefined) {
+      data.duration = updates.duration
     }
 
     await prisma.task.update({
@@ -600,6 +607,7 @@ export async function syncTaskDragDropAction(
     sectionId?: string | null
     completed?: boolean
     tags?: string[]
+    duration?: string | null
   },
   orderedIds: string[]
 ) {
@@ -618,6 +626,9 @@ export async function syncTaskDragDropAction(
     }
     if (updates.sectionId !== undefined) {
       data.sectionId = updates.sectionId
+    }
+    if (updates.duration !== undefined) {
+      data.duration = updates.duration
     }
     if (updates.completed !== undefined) {
       data.status = updates.completed ? "COMPLETED" : "NORMAL"

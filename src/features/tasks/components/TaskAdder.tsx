@@ -22,7 +22,8 @@ interface TaskAdderProps {
     priority: "NONE" | "LOW" | "MEDIUM" | "HIGH",
     dueDate: string,
     projectId: string,
-    tag: string
+    tag: string,
+    duration: string | null
   ) => Promise<void> | void
 }
 
@@ -36,6 +37,7 @@ export function TaskAdder({
   const [title, setTitle] = useState("")
   const [priority, setPriority] = useState<Priority>("NONE")
   const [dueDate, setDueDate] = useState("")
+  const [duration, setDuration] = useState<string | null>(null)
   const [projectId, setProjectId] = useState("inbox")
   const [tag, setTag] = useState("")
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
@@ -62,12 +64,13 @@ export function TaskAdder({
     e.preventDefault()
     if (!title.trim()) return
 
-    await onAddTask(title, priority, dueDate, projectId, tag)
+    await onAddTask(title, priority, dueDate, projectId, tag, duration)
 
     setTitle("")
     setPriority("NONE")
     setDueDate(defaultDueDate || (activeTab === "today" ? new Date().toISOString().split("T")[0] : ""))
     setTag("")
+    setDuration(null)
   }
 
   const showProjectSelector = ["today", "upcoming", "inbox", "calendar"].includes(activeTab)
@@ -100,6 +103,8 @@ export function TaskAdder({
           <CalendarDropdown
             value={dueDate || null}
             onChange={(date) => setDueDate(date || "")}
+            duration={duration}
+            onDurationChange={setDuration}
           />
 
           {/* List Dropdown */}

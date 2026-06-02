@@ -84,6 +84,7 @@ interface DashboardContextType {
       dueDate?: string | null
       projectId?: string | null
       sectionId?: string | null
+      duration?: string | null
     }
   ) => Promise<void>
 
@@ -211,6 +212,7 @@ export function DashboardProvider({
       dueDate?: string | null
       projectId?: string | null
       sectionId?: string | null
+      duration?: string | null
     }
   ) => {
     // Optimistic state update
