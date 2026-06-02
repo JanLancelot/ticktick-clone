@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react"
+import React, { useState, useRef, useCallback } from "react"
 import {
   Calendar,
   X,
@@ -47,6 +47,7 @@ export function CalendarDropdown({
   const [startM, setStartM] = useState(0)
   const [endH, setEndH] = useState(17)
   const [endM, setEndM] = useState(0)
+  const [isDurationSet, setIsDurationSet] = useState(duration !== null)
 
   // Sync / Parse duration when opened
   const handleOpen = () => {
@@ -71,12 +72,14 @@ export function CalendarDropdown({
       } catch (err) {
         console.error("Error parsing duration range:", err)
       }
+      setIsDurationSet(true)
     } else {
       // Defaults
       setStartH(9)
       setStartM(0)
       setEndH(17)
       setEndM(0)
+      setIsDurationSet(false)
     }
 
     setOpen(!open)
@@ -238,6 +241,7 @@ export function CalendarDropdown({
         setEndH(parsed.hour24)
         setEndM(parsed.minute)
       }
+      setIsDurationSet(true)
     }
     setEditingTarget(null)
   }, [editingTarget, editingValue])
@@ -263,8 +267,8 @@ export function CalendarDropdown({
     const rx = clientX - rect.left - cx
     const ry = clientY - rect.top - cy
     
-    let angle = Math.atan2(ry, rx) * (180 / Math.PI)
-    let degrees = (angle + 90 + 360) % 360
+    const angle = Math.atan2(ry, rx) * (180 / Math.PI)
+    const degrees = (angle + 90 + 360) % 360
     
     if (clockMode === "hours") {
       // 12 o'clock divisions
@@ -282,7 +286,7 @@ export function CalendarDropdown({
       }
     } else {
       // 60 minutes divisions
-      let minSelected = Math.round(degrees / 6) % 60
+      const minSelected = Math.round(degrees / 6) % 60
       // Snap to 5-minute ticks
       const snappedMin = Math.round(minSelected / 5) * 5 % 60
       if (activeTarget === "start") {
@@ -291,6 +295,7 @@ export function CalendarDropdown({
         setEndM(snappedMin)
       }
     }
+    setIsDurationSet(true)
   }
 
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -346,11 +351,13 @@ export function CalendarDropdown({
       setStartM(sM)
       setEndH(eH)
       setEndM(eM)
+      setIsDurationSet(true)
     } else {
       setStartH(9)
       setStartM(0)
       setEndH(17)
       setEndM(0)
+      setIsDurationSet(false)
     }
   }
 
@@ -360,7 +367,7 @@ export function CalendarDropdown({
     return `${startStr}-${endStr}`
   }
 
-  const hasPresetDuration = duration !== null
+
 
   return (
     <div className="relative flex items-center gap-1 text-xs font-bold text-muted-foreground">
@@ -413,7 +420,10 @@ export function CalendarDropdown({
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("duration")}
+                onClick={() => {
+                  setActiveTab("duration")
+                  setIsDurationSet(true)
+                }}
                 className={`flex-1 py-1.5 rounded-lg text-center font-black transition-all cursor-pointer ${
                   activeTab === "duration"
                     ? "bg-card text-foreground shadow-xs scale-[1.01]"
@@ -674,6 +684,7 @@ export function CalendarDropdown({
                           if (activeTarget === "start") setStartH(activeHour - 12)
                           else setEndH(activeHour - 12)
                         }
+                        setIsDurationSet(true)
                       }}
                       className={`flex-1 py-1 rounded-md text-center transition-all cursor-pointer ${
                         (activeTarget === "start" ? startH : endH) < 12 
@@ -691,6 +702,7 @@ export function CalendarDropdown({
                           if (activeTarget === "start") setStartH(activeHour + 12)
                           else setEndH(activeHour + 12)
                         }
+                        setIsDurationSet(true)
                       }}
                       className={`flex-1 py-1 rounded-md text-center transition-all cursor-pointer ${
                         (activeTarget === "start" ? startH : endH) >= 12 
@@ -814,12 +826,11 @@ export function CalendarDropdown({
                     })}
                   </div>
                   
-                  {hasPresetDuration && (
+                  {isDurationSet && (
                     <button
                       type="button"
                       onClick={() => {
                         applyDurationPresetStr(null)
-                        if (onDurationChange) onDurationChange(null)
                       }}
                       className="w-full py-2 mt-2 bg-red-500/5 hover:bg-red-500/10 text-red-500 border border-red-500/10 hover:border-red-500/25 text-[10px] font-black rounded-xl cursor-pointer text-center transition-colors select-none"
                     >
@@ -837,7 +848,7 @@ export function CalendarDropdown({
                 onClick={() => {
                   onChange(tempSelectedDate || null)
                   if (onDurationChange) {
-                    onDurationChange(getCombinedTimeRangeString())
+                    onDurationChange(isDurationSet ? getCombinedTimeRangeString() : null)
                   }
                   setOpen(false)
                 }}
