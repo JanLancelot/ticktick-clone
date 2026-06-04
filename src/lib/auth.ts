@@ -12,6 +12,14 @@ export const auth = betterAuth({
     enabled: true,
   },
 
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://*.vercel.app",
+    "https://*.github.dev",
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
+    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
+  ],
+
   socialProviders: {
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? {
       google: {
